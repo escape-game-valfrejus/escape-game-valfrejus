@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation Escape Game Valfréjus</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 28px;
+        }
+
+        .calendar-container {
+            background: #fff;
+            color: #000;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar-header button {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .calendar-header button:hover {
+            background: #333;
+        }
+
+        .calendar-header h2 {
+            font-size: 20px;
+        }
+
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+        }
+
+        .day {
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: #fff;
+        }
+
+        .day:hover:not(.disabled):not(.empty) {
+            background: #f0f0f0;
+        }
+
+        .day.disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .day.selected {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .day.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .section {
+            background: #fff;
+            color: #000;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h3 {
+            margin-bottom: 15px;
+        }
+
+        .time-slots, .participants {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .slot, .participant-option {
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .slot:hover:not(.disabled), .participant-option:hover {
+            background: #f0f0f0;
+        }
+
+        .slot.selected, .participant-option.selected {
+            background: #000;
+            color: #fff;
+        }
+
+        .slot.disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .price-info {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #333;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .confirmation {
+            background: #fff;
+            color: #000;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            display: none;
+        }
+
+        .confirmation.active {
+            display: block;
+        }
+
+        .confirmation h2 {
+            color: green;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
+
+        <!-- Calendrier -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button id="prevWeek">&lt; Semaine précédente</button>
+                <h2 id="weekTitle"></h2>
+                <button id="nextWeek">Semaine suivante &gt;</button>
+            </div>
+            <div class="weekdays">
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mer</div>
+                <div>Jeu</div>
+                <div>Ven</div>
+                <div>Sam</div>
+                <div>Dim</div>
+            </div>
+            <div class="days" id="daysContainer"></div>
+        </div>
+
+        <!-- Sélection de l'heure -->
+        <div class="section" id="timeSection">
+            <h3>Sélectionnez votre créneau horaire</h3>
+            <div class="time-slots">
+                <div class="slot" data-time="10h">10h00</div>
+                <div class="slot" data-time="12h">12h00</div>
+                <div class="slot" data-time="14h">14h00</div>
+                <div class="slot" data-time="17h">17h00</div>
+                <div class="slot" data-time="19h">19h00</div>
+            </div>
+        </div>
+
+        <!-- Sélection du nombre de participants -->
+        <div class="section" id="participantsSection">
+            <h3>Nombre de participants</h3>
+            <div class="participants">
+                <div class="participant-option" data-count="2" data-price="22">
+                    <div>2 personnes</div>
+                    <div style="font-size: 14px; margin-top: 5px;">22€/pers</div>
+                </div>
+                <div class="participant-option" data-count="3" data-price="20">
+                    <div>3 personnes</div>
+                    <div style="font-size: 14px; margin-top: 5px;">20€/pers</div>
+                </div>
+                <div class="participant-option" data-count="4" data-price="20">
+                    <div>4 personnes</div>
+                    <div style="font-size: 14px; margin-top: 5px;">20€/pers</div>
+                </div>
+                <div class="participant-option" data-count="5" data-price="18">
+                    <div>5 personnes</div>
+                    <div style="font-size: 14px; margin-top: 5px;">18€/pers</div>
+                </div>
+                <div class="participant-option" data-count="6" data-price="18">
+                    <div>6 personnes</div>
+                    <div style="font-size: 14px; margin-top: 5px;">18€/pers</div>
+                </div>
+            </div>
+            <div class="price-info" id="priceInfo" style="display: none;"></div>
+        </div>
+
+        <!-- Formulaire d'informations -->
+        <div class="section" id="formSection">
+            <h3>Vos informations</h3>
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="name">Nom de la réservation *</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Numéro de téléphone *</label>
+                    <input type="tel" id="phone" required>
+                </div>
+                <button type="submit" class="btn">Confirmer la réservation</button>
+            </form>
+        </div>
+
+        <!-- Confirmation -->
+        <div class="confirmation" id="confirmation">
+            <h2>✓ Réservation confirmée !</h2>
+            <p>Un email de confirmation a été envoyé à votre adresse.</p>
+            <div id="confirmationDetails" style="margin-top: 20px; text-align: left;"></div>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwqims-Oio1jOn4P1btWMwkwAPvgvoBEH7r6z1i-2SscLYtvUMwilwCg5NoIPVhdad8Gw/exec';
+        
+        let currentWeekStart = new Date();
+        let selectedDate = null;
+        let selectedTime = null;
+        let selectedParticipants = null;
+        let pricePerPerson = null;
+        let bookedSlots = [];
+
+        const openingStart = new Date('2025-12-15');
+        const openingEnd = new Date('2026-04-15');
+
+        async function loadBookedSlots() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const data = await response.json();
+                
+                if (data.status === 'success' && data.reservations) {
+                    bookedSlots = data.reservations.map(r => {
+                        const dateStr = new Date(r.date).toLocaleDateString('fr-FR');
+                        return `${dateStr}-${r.heure}`;
+                    });
+                }
+            } catch (error) {
+                console.error('Erreur chargement réservations:', error);
+            }
+        }
+
+        function isSlotBooked(date, time) {
+            const dateStr = formatDate(date);
+            const slotKey = `${dateStr}-${time}`;
+            return bookedSlots.includes(slotKey);
+        }
+
+        function getMonday(d) {
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(d.setDate(diff));
+        }
+
+        function formatDate(date) {
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return date.toLocaleDateString('fr-FR', options);
+        }
+
+        function renderCalendar() {
+            const monday = getMonday(new Date(currentWeekStart));
+            const container = document.getElementById('daysContainer');
+            const weekTitle = document.getElementById('weekTitle');
+            
+            const endOfWeek = new Date(monday);
+            endOfWeek.setDate(endOfWeek.getDate() + 6);
+            
+            weekTitle.textContent = `${formatDate(monday)} - ${formatDate(endOfWeek)}`;
+            container.innerHTML = '';
+
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(monday);
+                date.setDate(date.getDate() + i);
+                
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const dateOnly = new Date(date);
+                dateOnly.setHours(0, 0, 0, 0);
+                
+                const isOutsideOpeningPeriod = dateOnly < openingStart || dateOnly > openingEnd;
+                const isDisabled = isOutsideOpeningPeriod || date < today;
+                
+                if (isDisabled) {
+                    dayDiv.classList.add('disabled');
+                }
+                
+                dayDiv.innerHTML = `<div style="font-weight: bold;">${date.getDate()}</div>`;
+                
+                if (!isDisabled) {
+                    dayDiv.addEventListener('click', () => selectDate(date, dayDiv));
+                }
+                
+                container.appendChild(dayDiv);
+            }
+        }
+
+        function selectDate(date, element) {
+            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedDate = date;
+            
+            const dayOfWeek = date.getDay();
+            const slots = document.querySelectorAll('.slot');
+            
+            slots.forEach(slot => {
+                const time = slot.dataset.time;
+                if ((dayOfWeek === 6 || dayOfWeek === 0) && (time === '10h' || time === '12h')) {
+                    slot.style.display = 'none';
+                } else {
+                    slot.style.display = 'block';
+                }
+                
+                if (isSlotBooked(date, time)) {
+                    slot.classList.add('disabled');
+                    slot.style.cursor = 'not-allowed';
+                    slot.style.opacity = '0.5';
+                } else {
+                    slot.classList.remove('disabled');
+                    slot.style.cursor = 'pointer';
+                    slot.style.opacity = '1';
+                }
+                
+                slot.classList.remove('selected');
+            });
+            
+            selectedTime = null;
+            document.getElementById('participantsSection').classList.remove('active');
+            document.getElementById('formSection').classList.remove('active');
+            
+            document.getElementById('timeSection').classList.add('active');
+            document.getElementById('timeSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('prevWeek').addEventListener('click', () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            renderCalendar();
+        });
+
+        document.getElementById('nextWeek').addEventListener('click', () => {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            renderCalendar();
+        });
+
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.addEventListener('click', function() {
+                if (this.classList.contains('disabled')) {
+                    return;
+                }
+                
+                document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTime = this.dataset.time;
+                
+                document.getElementById('participantsSection').classList.add('active');
+                document.getElementById('participantsSection').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        document.querySelectorAll('.participant-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.participant-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedParticipants = this.dataset.count;
+                pricePerPerson = this.dataset.price;
+                
+                const total = selectedParticipants * pricePerPerson;
+                const priceInfo = document.getElementById('priceInfo');
+                priceInfo.textContent = `Total: ${selectedParticipants} personnes × ${pricePerPerson}€ = ${total}€`;
+                priceInfo.style.display = 'block';
+                
+                document.getElementById('formSection').classList.add('active');
+                document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const total = selectedParticipants * pricePerPerson;
+            
+            const bookingData = {
+                date: formatDate(selectedDate),
+                heure: selectedTime,
+                participants: selectedParticipants,
+                prixParPersonne: pricePerPerson + '€',
+                total: total + '€',
+                nom: name,
+                email: email,
+                telephone: phone
+            };
+            
+            try {
+                const response = await fetch(SHEET_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(bookingData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    const details = `
+                        <p><strong>Date:</strong> ${formatDate(selectedDate)}</p>
+                        <p><strong>Heure:</strong> ${selectedTime}</p>
+                        <p><strong>Participants:</strong> ${selectedParticipants} personnes</p>
+                        <p><strong>Prix:</strong> ${pricePerPerson}€/personne</p>
+                        <p><strong>Total:</strong> ${total}€</p>
+                        <p><strong>Nom:</strong> ${name}</p>
+                        <p><strong>Email:</strong> ${email}</p>
+                        <p><strong>Téléphone:</strong> ${phone}</p>
+                    `;
+                    
+                    document.getElementById('confirmationDetails').innerHTML = details;
+                    
+                    document.querySelectorAll('.section, .calendar-container').forEach(s => s.style.display = 'none');
+                    document.getElementById('confirmation').classList.add('active');
+                    document.getElementById('confirmation').scrollIntoView({ behavior: 'smooth' });
+                    
+                    await loadBookedSlots();
+                } else {
+                    alert('Erreur lors de la réservation. Veuillez réessayer.');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur de connexion. Veuillez réessayer.');
+            }
+        });
+
+        loadBookedSlots().then(() => {
+            renderCalendar();
+        });
+    </script>
+</body>
+</html>
