@@ -492,6 +492,9 @@ function selectDate(date, element) {
   document.getElementById('recap').style.display = 'none';
   
   renderSlots();
+ if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) { return; }
+
+
   
   setTimeout(() => {
     document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
