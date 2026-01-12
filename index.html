@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -196,12 +197,24 @@ const scriptUrl = 'https://corsproxy.io/?' + encodeURIComponent(
   'https://script.google.com/macros/s/AKfycbzFURmiwkYQ8fGSqP8Lv0AMjskEZ7M0ppyGptjchKIiOzlIKXK64_5L5LKpT0KP3qtbTg/exec'
 );
 
-let currentWeekStart = new Date('2025-12-13'); // Samedi de départ
-let selectedDate = null;
-let selectedSlot = null;
+let currentWeekStart = getMondayOfCurrentWeek(); // ← lundi de la semaine actuelle
 
 // Créneaux horaires (avec règles spéciales sam/dim)
 const allSlots = ['10h', '12h', '14h', '17h', '19h'];
+
+// Fonction pour obtenir le lundi de la semaine courante
+function getMondayOfCurrentWeek() {
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=dim, 1=lun, ..., 6=sam
+  
+  // Calcul du lundi : on soustrait le jour actuel (ajusté pour lundi = 1)
+  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek); // Si dimanche → lundi précédent
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  
+  return monday;
+}
 
 // ────────────────────────────────────────────────
 // Fonctions de navigation semaines
@@ -226,14 +239,15 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  for (let i = 0; i < 7; i++) {
+  // On affiche 7 jours : samedi → vendredi
+  for (let i = -2; i < 5; i++) {  // -2 = samedi, -1 = dimanche, 0 = lundi, ..., +4 = vendredi
     const day = new Date(currentWeekStart);
     day.setDate(currentWeekStart.getDate() + i);
 
     const dayEl = document.createElement('div');
     dayEl.className = 'day';
     dayEl.innerHTML = `
-      <strong>${day.toLocaleDateString('fr-FR', {weekday: 'long'})}</strong><br>
+      <strong>${day.toLocaleDateString('fr-FR', {weekday: 'long'}).toUpperCase()}</strong><br>
       ${day.toLocaleDateString('fr-FR', {day: 'numeric', month: 'numeric'})}
     `;
 
@@ -394,6 +408,8 @@ function formatDate(date) {
 }
 
 // Initialisation
+let selectedDate = null;
+let selectedSlot = null;
 renderCalendar();
 </script>
 </body>
