@@ -1,544 +1,799 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation Escape Game Valfréjus</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Réservation Escape Game Valfréjus</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #000;
+      color: #fff;
+      padding: 20px;
+      min-height: 100vh;
+    }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 28px;
-        }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #fff;
+    }
 
-        .calendar-container {
-            background: #fff;
-            color: #000;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
+    .calendar-container {
+      background-color: #fff;
+      color: #000;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
 
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
 
-        .calendar-header button {
-            background: #000;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+    .calendar-header button {
+      background-color: #000;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
 
-        .calendar-header button:hover {
-            background: #333;
-        }
+    .calendar-header button:hover {
+      background-color: #333;
+    }
 
-        .calendar-header h2 {
-            font-size: 20px;
-        }
+    .calendar-header h2 {
+      font-size: 1.5rem;
+    }
 
-        .weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-        .days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 10px;
-        }
+    .calendar-day-label {
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
 
-        .day {
-            padding: 15px;
-            text-align: center;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            background: #fff;
-        }
+    .calendar-day {
+      text-align: center;
+      padding: 15px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background-color: #fff;
+    }
 
-        .day:hover:not(.disabled):not(.empty) {
-            background: #f0f0f0;
-        }
+    .calendar-day:hover:not(.disabled):not(.selected) {
+      background-color: #f0f0f0;
+      border-color: #000;
+    }
 
-        .day.disabled {
-            background: #ccc;
-            color: #666;
-            cursor: not-allowed;
-        }
+    .calendar-day.disabled {
+      background-color: #ccc;
+      color: #666;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
 
-        .day.selected {
-            background: #000;
-            color: #fff;
-            border-color: #000;
-        }
+    .calendar-day.selected {
+      background-color: #000;
+      color: #fff;
+      border-color: #000;
+    }
 
-        .day.empty {
-            background: transparent;
-            cursor: default;
-        }
+    .time-slots {
+      margin-bottom: 30px;
+    }
 
-        .section {
-            background: #fff;
-            color: #000;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: none;
-        }
+    .time-slots h3 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
 
-        .section.active {
-            display: block;
-        }
+    .time-slot-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 15px;
+    }
 
-        .section h3 {
-            margin-bottom: 15px;
-        }
+    .time-slot {
+      background-color: #fff;
+      color: #000;
+      border: 2px solid #fff;
+      padding: 15px;
+      text-align: center;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
 
-        .time-slots, .participants {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .time-slot:hover:not(.disabled):not(.selected) {
+      background-color: #000;
+      color: #fff;
+    }
 
-        .slot, .participant-option {
-            padding: 15px;
-            text-align: center;
-            border: 2px solid #000;
-            border-radius: 5px;
-            cursor: pointer;
-            background: #fff;
-        }
+    .time-slot.disabled {
+      background-color: #555;
+      color: #999;
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
 
-        .slot:hover:not(.disabled), .participant-option:hover {
-            background: #f0f0f0;
-        }
+    .time-slot.selected {
+      background-color: #000;
+      color: #fff;
+      border-color: #fff;
+    }
 
-        .slot.selected, .participant-option.selected {
-            background: #000;
-            color: #fff;
-        }
+    .participants {
+      margin-bottom: 30px;
+    }
 
-        .slot.disabled {
-            background: #ccc;
-            color: #666;
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+    .participants h3 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
+    .participant-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
+    .participant-option {
+      background-color: #fff;
+      color: #000;
+      border: 2px solid #fff;
+      padding: 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
 
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+    .participant-option:hover:not(.selected) {
+      background-color: #000;
+      color: #fff;
+    }
 
-        .price-info {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            font-weight: bold;
-        }
+    .participant-option.selected {
+      background-color: #000;
+      color: #fff;
+      border-color: #fff;
+    }
 
-        .btn {
-            background: #000;
-            color: #fff;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-        }
+    .participant-option .number {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
 
-        .btn:hover {
-            background: #333;
-        }
+    .participant-option .price {
+      font-size: 1.1rem;
+    }
 
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+    .participant-option .total {
+      font-size: 0.9rem;
+      margin-top: 10px;
+      opacity: 0.8;
+    }
 
-        .confirmation {
-            background: #fff;
-            color: #000;
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            display: none;
-        }
+    .form-section {
+      margin-bottom: 30px;
+    }
 
-        .confirmation.active {
-            display: block;
-        }
+    .form-section h3 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
 
-        .confirmation h2 {
-            color: green;
-            margin-bottom: 20px;
-        }
-    </style>
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      font-size: 1rem;
+      background-color: #000;
+      color: #fff;
+    }
+
+    .form-group input::placeholder {
+      color: #999;
+    }
+
+    .summary {
+      background-color: #fff;
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    .summary h3 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .summary-total {
+      border-top: 2px solid #000;
+      padding-top: 15px;
+      margin-top: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background-color: #fff;
+      color: #000;
+      border: none;
+      padding: 20px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .submit-btn:hover {
+      background-color: #000;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+
+    .submit-btn:disabled {
+      background-color: #555;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .confirmation {
+      background-color: #fff;
+      color: #000;
+      padding: 40px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .confirmation h2 {
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #28a745;
+    }
+
+    .confirmation-details {
+      text-align: left;
+      margin: 30px auto;
+      max-width: 500px;
+    }
+
+    .confirmation-item {
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+      padding: 10px;
+      background-color: #f8f8f8;
+      border-radius: 5px;
+    }
+
+    .confirmation-item strong {
+      display: inline-block;
+      min-width: 150px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.2rem;
+    }
+
+    .error {
+      background-color: #dc3545;
+      color: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      .calendar-days {
+        gap: 5px;
+      }
+
+      .calendar-day {
+        padding: 10px 5px;
+        font-size: 0.9rem;
+      }
+
+      .time-slot-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .participant-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
+  <div class="container">
+    <h1>Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
 
-        <!-- Calendrier -->
-        <div class="calendar-container">
-            <div class="calendar-header">
-                <button id="prevWeek">&lt; Semaine précédente</button>
-                <h2 id="weekTitle"></h2>
-                <button id="nextWeek">Semaine suivante &gt;</button>
-            </div>
-            <div class="weekdays">
-                <div>Lun</div>
-                <div>Mar</div>
-                <div>Mer</div>
-                <div>Jeu</div>
-                <div>Ven</div>
-                <div>Sam</div>
-                <div>Dim</div>
-            </div>
-            <div class="days" id="daysContainer"></div>
+    <div id="bookingForm">
+      <!-- Calendrier -->
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <button id="prevWeek">← Semaine précédente</button>
+          <h2 id="currentMonth"></h2>
+          <button id="nextWeek">Semaine suivante →</button>
         </div>
+        <div class="calendar-days" id="calendarDays"></div>
+      </div>
 
-        <!-- Sélection de l'heure -->
-        <div class="section" id="timeSection">
-            <h3>Sélectionnez votre créneau horaire</h3>
-            <div class="time-slots">
-                <div class="slot" data-time="10h">10h00</div>
-                <div class="slot" data-time="12h">12h00</div>
-                <div class="slot" data-time="14h">14h00</div>
-                <div class="slot" data-time="17h">17h00</div>
-                <div class="slot" data-time="19h">19h00</div>
-            </div>
-        </div>
+      <!-- Créneaux horaires -->
+      <div class="time-slots hidden" id="timeSlots">
+        <h3>Sélectionnez un créneau horaire</h3>
+        <div class="time-slot-container" id="timeSlotContainer"></div>
+      </div>
 
-        <!-- Sélection du nombre de participants -->
-        <div class="section" id="participantsSection">
-            <h3>Nombre de participants</h3>
-            <div class="participants">
-                <div class="participant-option" data-count="2" data-price="22">
-                    <div>2 personnes</div>
-                    <div style="font-size: 14px; margin-top: 5px;">22€/pers</div>
-                </div>
-                <div class="participant-option" data-count="3" data-price="20">
-                    <div>3 personnes</div>
-                    <div style="font-size: 14px; margin-top: 5px;">20€/pers</div>
-                </div>
-                <div class="participant-option" data-count="4" data-price="20">
-                    <div>4 personnes</div>
-                    <div style="font-size: 14px; margin-top: 5px;">20€/pers</div>
-                </div>
-                <div class="participant-option" data-count="5" data-price="18">
-                    <div>5 personnes</div>
-                    <div style="font-size: 14px; margin-top: 5px;">18€/pers</div>
-                </div>
-                <div class="participant-option" data-count="6" data-price="18">
-                    <div>6 personnes</div>
-                    <div style="font-size: 14px; margin-top: 5px;">18€/pers</div>
-                </div>
-            </div>
-            <div class="price-info" id="priceInfo" style="display: none;"></div>
-        </div>
+      <!-- Nombre de participants -->
+      <div class="participants hidden" id="participants">
+        <h3>Nombre de participants</h3>
+        <div class="participant-options" id="participantOptions"></div>
+      </div>
 
-        <!-- Formulaire d'informations -->
-        <div class="section" id="formSection">
-            <h3>Vos informations</h3>
-            <form id="bookingForm">
-                <div class="form-group">
-                    <label for="name">Nom de la réservation *</label>
-                    <input type="text" id="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Numéro de téléphone *</label>
-                    <input type="tel" id="phone" required>
-                </div>
-                <button type="submit" class="btn">Confirmer la réservation</button>
-            </form>
+      <!-- Récapitulatif -->
+      <div class="summary hidden" id="summary">
+        <h3>Récapitulatif</h3>
+        <div class="summary-item">
+          <span>Date :</span>
+          <span id="summaryDate">-</span>
         </div>
+        <div class="summary-item">
+          <span>Heure :</span>
+          <span id="summaryTime">-</span>
+        </div>
+        <div class="summary-item">
+          <span>Participants :</span>
+          <span id="summaryParticipants">-</span>
+        </div>
+        <div class="summary-item">
+          <span>Prix par personne :</span>
+          <span id="summaryPricePerPerson">-</span>
+        </div>
+        <div class="summary-item summary-total">
+          <span>Total :</span>
+          <span id="summaryTotal">-</span>
+        </div>
+      </div>
 
-        <!-- Confirmation -->
-        <div class="confirmation" id="confirmation">
-            <h2>✓ Réservation confirmée !</h2>
-            <p>Un email de confirmation a été envoyé à votre adresse.</p>
-            <div id="confirmationDetails" style="margin-top: 20px; text-align: left;"></div>
+      <!-- Formulaire de contact -->
+      <div class="form-section hidden" id="contactForm">
+        <h3>Vos coordonnées</h3>
+        <div class="form-group">
+          <label for="name">Nom complet *</label>
+          <input type="text" id="name" placeholder="Jean Dupont" required>
         </div>
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" placeholder="jean.dupont@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="phone">Téléphone *</label>
+          <input type="tel" id="phone" placeholder="06 12 34 56 78" required>
+        </div>
+        <button class="submit-btn" id="submitBtn">Confirmer la réservation</button>
+      </div>
+
+      <div id="errorMessage" class="error hidden"></div>
     </div>
 
-    <script>
-        const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwqims-Oio1jOn4P1btWMwkwAPvgvoBEH7r6z1i-2SscLYtvUMwilwCg5NoIPVhdad8Gw/exec';
+    <!-- Confirmation -->
+    <div id="confirmation" class="confirmation hidden">
+      <h2>✓ Réservation confirmée !</h2>
+      <p>Merci pour votre réservation. Un email de confirmation vous a été envoyé.</p>
+      <div class="confirmation-details">
+        <div class="confirmation-item">
+          <strong>Date :</strong>
+          <span id="confirmDate"></span>
+        </div>
+        <div class="confirmation-item">
+          <strong>Heure :</strong>
+          <span id="confirmTime"></span>
+        </div>
+        <div class="confirmation-item">
+          <strong>Participants :</strong>
+          <span id="confirmParticipants"></span>
+        </div>
+        <div class="confirmation-item">
+          <strong>Total :</strong>
+          <span id="confirmTotal"></span>
+        </div>
+        <div class="confirmation-item">
+          <strong>Nom :</strong>
+          <span id="confirmName"></span>
+        </div>
+        <div class="confirmation-item">
+          <strong>Email :</strong>
+          <span id="confirmEmail"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const startDate = new Date('2025-12-15');
+    const endDate = new Date('2026-04-15');
+    const timeSlots = ['10h', '12h', '14h', '17h', '19h'];
+    const pricing = [
+      { min: 2, max: 2, pricePerPerson: 22 },
+      { min: 3, max: 4, pricePerPerson: 20 },
+      { min: 5, max: 6, pricePerPerson: 18 }
+    ];
+
+    // Créneaux restreints pour samedi et dimanche
+    const weekendRestrictions = {
+      6: ['14h', '17h', '19h'], // Samedi
+      0: ['14h', '17h', '19h']  // Dimanche
+    };
+
+    // État de l'application
+    let currentWeekStart = new Date();
+    let selectedDate = null;
+    let selectedTime = null;
+    let selectedParticipants = null;
+    let bookedSlots = []; // Créneaux déjà réservés depuis Google Sheets
+
+    // Utilisation d'un proxy CORS pour éviter les blocages
+    const scriptUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://script.google.com/macros/s/AKfycbwqims-Oio1jOn4P1btWMwkwAPvgvoBEH7r6z1i-2SscLYtvUMwilwCg5NoIPVhdad8Gw/exec');
+
+    // Charger les réservations existantes depuis Google Sheets
+    async function loadBookedSlots() {
+      try {
+        const response = await fetch(scriptUrl);
+        const data = await response.json();
         
-        let currentWeekStart = new Date();
-        let selectedDate = null;
-        let selectedTime = null;
-        let selectedParticipants = null;
-        let pricePerPerson = null;
-        let bookedSlots = [];
+        if (data.status === 'success' && data.reservations) {
+          bookedSlots = data.reservations.map(res => ({
+            date: formatDateForComparison(new Date(res.date)),
+            heure: res.heure
+          }));
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des réservations:', error);
+      }
+    }
 
-        const openingStart = new Date('2025-12-15');
-        const openingEnd = new Date('2026-04-15');
+    // Formater la date pour comparaison (YYYY-MM-DD)
+    function formatDateForComparison(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
 
-        async function loadBookedSlots() {
-            try {
-                const response = await fetch(SHEET_URL);
-                const data = await response.json();
-                
-                if (data.status === 'success' && data.reservations) {
-                    bookedSlots = data.reservations.map(r => {
-                        const dateStr = new Date(r.date).toLocaleDateString('fr-FR');
-                        return `${dateStr}-${r.heure}`;
-                    });
-                }
-            } catch (error) {
-                console.error('Erreur chargement réservations:', error);
-            }
+    // Vérifier si un créneau est déjà réservé
+    function isSlotBooked(date, time) {
+      const dateStr = formatDateForComparison(date);
+      return bookedSlots.some(slot => slot.date === dateStr && slot.heure === time);
+    }
+
+    // Obtenir le lundi de la semaine
+    function getMonday(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(d.setDate(diff));
+    }
+
+    // Générer le calendrier
+    function generateCalendar() {
+      const calendarDays = document.getElementById('calendarDays');
+      calendarDays.innerHTML = '';
+
+      // Jours de la semaine
+      const dayLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+      dayLabels.forEach(label => {
+        const dayLabel = document.createElement('div');
+        dayLabel.className = 'calendar-day-label';
+        dayLabel.textContent = label;
+        calendarDays.appendChild(dayLabel);
+      });
+
+      // Jours de la semaine
+      const monday = getMonday(currentWeekStart);
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
+
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        dayDiv.textContent = date.getDate();
+
+        // Vérifier si la date est dans la plage autorisée
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (date < startDate || date > endDate || date < today) {
+          dayDiv.classList.add('disabled');
+        } else {
+          dayDiv.addEventListener('click', () => selectDate(date));
         }
 
-        function isSlotBooked(date, time) {
-            const dateStr = formatDate(date);
-            const slotKey = `${dateStr}-${time}`;
-            return bookedSlots.includes(slotKey);
+        if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+          dayDiv.classList.add('selected');
         }
 
-        function getMonday(d) {
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            return new Date(d.setDate(diff));
+        calendarDays.appendChild(dayDiv);
+      }
+
+      // Mettre à jour le mois affiché
+      const monthYear = monday.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      document.getElementById('currentMonth').textContent = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+    }
+
+    // Sélectionner une date
+    function selectDate(date) {
+      selectedDate = date;
+      selectedTime = null;
+      selectedParticipants = null;
+      generateCalendar();
+      showTimeSlots();
+      document.getElementById('participants').classList.add('hidden');
+      document.getElementById('summary').classList.add('hidden');
+      document.getElementById('contactForm').classList.add('hidden');
+    }
+
+    // Afficher les créneaux horaires
+    function showTimeSlots() {
+      const container = document.getElementById('timeSlotContainer');
+      container.innerHTML = '';
+
+      const dayOfWeek = selectedDate.getDay();
+      const availableSlots = weekendRestrictions[dayOfWeek] || timeSlots;
+
+      availableSlots.forEach(time => {
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        slot.textContent = time;
+
+        // Vérifier si le créneau est déjà réservé
+        if (isSlotBooked(selectedDate, time)) {
+          slot.classList.add('disabled');
+          slot.title = 'Créneau déjà réservé';
+        } else {
+          slot.addEventListener('click', () => selectTime(time));
         }
 
-        function formatDate(date) {
-            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-            return date.toLocaleDateString('fr-FR', options);
+        container.appendChild(slot);
+      });
+
+      document.getElementById('timeSlots').classList.remove('hidden');
+    }
+
+    // Sélectionner un créneau
+    function selectTime(time) {
+      if (isSlotBooked(selectedDate, time)) return;
+      
+      selectedTime = time;
+      selectedParticipants = null;
+      
+      document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+      });
+      event.target.classList.add('selected');
+      
+      showParticipants();
+      document.getElementById('summary').classList.add('hidden');
+      document.getElementById('contactForm').classList.add('hidden');
+    }
+
+    // Afficher les options de participants
+    function showParticipants() {
+      const container = document.getElementById('participantOptions');
+      container.innerHTML = '';
+
+      pricing.forEach(option => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'participant-option';
+        
+        const range = option.min === option.max ? `${option.min}` : `${option.min}-${option.max}`;
+        const total = option.min * option.pricePerPerson;
+        
+        optionDiv.innerHTML = `
+          <div class="number">${range} personne${option.max > 1 ? 's' : ''}</div>
+          <div class="price">${option.pricePerPerson}€ / personne</div>
+          <div class="total">À partir de ${total}€</div>
+        `;
+        
+        optionDiv.addEventListener('click', () => selectParticipants(option));
+        container.appendChild(optionDiv);
+      });
+
+      document.getElementById('participants').classList.remove('hidden');
+    }
+
+    // Sélectionner le nombre de participants
+    function selectParticipants(option) {
+      selectedParticipants = option;
+      
+      document.querySelectorAll('.participant-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      event.target.classList.add('selected');
+      
+      updateSummary();
+      document.getElementById('summary').classList.remove('hidden');
+      document.getElementById('contactForm').classList.remove('hidden');
+    }
+
+    // Mettre à jour le récapitulatif
+    function updateSummary() {
+      const dateStr = selectedDate.toLocaleDateString('fr-FR', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      document.getElementById('summaryDate').textContent = dateStr;
+      document.getElementById('summaryTime').textContent = selectedTime;
+      document.getElementById('summaryParticipants').textContent = `${selectedParticipants.min} personne${selectedParticipants.min > 1 ? 's' : ''}`;
+      document.getElementById('summaryPricePerPerson').textContent = `${selectedParticipants.pricePerPerson}€`;
+      
+      const total = selectedParticipants.min * selectedParticipants.pricePerPerson;
+      document.getElementById('summaryTotal').textContent = `${total}€`;
+    }
+
+    // Soumettre la réservation
+    async function submitBooking() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+
+      if (!name || !email || !phone) {
+        showError('Veuillez remplir tous les champs.');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Envoi en cours...';
+
+      const bookingData = {
+        date: selectedDate.toLocaleDateString('fr-FR'),
+        heure: selectedTime,
+        participants: selectedParticipants.min,
+        prixParPersonne: selectedParticipants.pricePerPerson,
+        total: selectedParticipants.min * selectedParticipants.pricePerPerson,
+        nom: name,
+        email: email,
+        telephone: phone
+      };
+
+      try {
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bookingData)
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          // Afficher la confirmation
+          document.getElementById('bookingForm').classList.add('hidden');
+          document.getElementById('confirmation').classList.remove('hidden');
+          
+          document.getElementById('confirmDate').textContent = bookingData.date;
+          document.getElementById('confirmTime').textContent = bookingData.heure;
+          document.getElementById('confirmParticipants').textContent = `${bookingData.participants} personne${bookingData.participants > 1 ? 's' : ''}`;
+          document.getElementById('confirmTotal').textContent = `${bookingData.total}€`;
+          document.getElementById('confirmName').textContent = bookingData.nom;
+          document.getElementById('confirmEmail').textContent = bookingData.email;
+
+          // Recharger les créneaux réservés
+          await loadBookedSlots();
+        } else {
+          showError('Erreur lors de l\'enregistrement. Veuillez réessayer.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirmer la réservation';
         }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showError('Erreur de connexion. Veuillez réessayer.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirmer la réservation';
+      }
+    }
 
-        function renderCalendar() {
-            const monday = getMonday(new Date(currentWeekStart));
-            const container = document.getElementById('daysContainer');
-            const weekTitle = document.getElementById('weekTitle');
-            
-            const endOfWeek = new Date(monday);
-            endOfWeek.setDate(endOfWeek.getDate() + 6);
-            
-            weekTitle.textContent = `${formatDate(monday)} - ${formatDate(endOfWeek)}`;
-            container.innerHTML = '';
+    // Afficher un message d'erreur
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = message;
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => {
+        errorDiv.classList.add('hidden');
+      }, 5000);
+    }
 
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(monday);
-                date.setDate(date.getDate() + i);
-                
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'day';
-                
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                const dateOnly = new Date(date);
-                dateOnly.setHours(0, 0, 0, 0);
-                
-                const isOutsideOpeningPeriod = dateOnly < openingStart || dateOnly > openingEnd;
-                const isDisabled = isOutsideOpeningPeriod || date < today;
-                
-                if (isDisabled) {
-                    dayDiv.classList.add('disabled');
-                }
-                
-                dayDiv.innerHTML = `<div style="font-weight: bold;">${date.getDate()}</div>`;
-                
-                if (!isDisabled) {
-                    dayDiv.addEventListener('click', () => selectDate(date, dayDiv));
-                }
-                
-                container.appendChild(dayDiv);
-            }
-        }
+    // Navigation du calendrier
+    document.getElementById('prevWeek').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      generateCalendar();
+    });
 
-        function selectDate(date, element) {
-            document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-            element.classList.add('selected');
-            selectedDate = date;
-            
-            const dayOfWeek = date.getDay();
-            const slots = document.querySelectorAll('.slot');
-            
-            slots.forEach(slot => {
-                const time = slot.dataset.time;
-                if ((dayOfWeek === 6 || dayOfWeek === 0) && (time === '10h' || time === '12h')) {
-                    slot.style.display = 'none';
-                } else {
-                    slot.style.display = 'block';
-                }
-                
-                if (isSlotBooked(date, time)) {
-                    slot.classList.add('disabled');
-                    slot.style.cursor = 'not-allowed';
-                    slot.style.opacity = '0.5';
-                } else {
-                    slot.classList.remove('disabled');
-                    slot.style.cursor = 'pointer';
-                    slot.style.opacity = '1';
-                }
-                
-                slot.classList.remove('selected');
-            });
-            
-            selectedTime = null;
-            document.getElementById('participantsSection').classList.remove('active');
-            document.getElementById('formSection').classList.remove('active');
-            
-            document.getElementById('timeSection').classList.add('active');
-            document.getElementById('timeSection').scrollIntoView({ behavior: 'smooth' });
-        }
+    document.getElementById('nextWeek').addEventListener('click', () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      generateCalendar();
+    });
 
-        document.getElementById('prevWeek').addEventListener('click', () => {
-            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-            renderCalendar();
-        });
+    document.getElementById('submitBtn').addEventListener('click', submitBooking);
 
-        document.getElementById('nextWeek').addEventListener('click', () => {
-            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-            renderCalendar();
-        });
+    // Initialisation
+    async function init() {
+      await loadBookedSlots();
+      currentWeekStart = getMonday(new Date());
+      generateCalendar();
+    }
 
-        document.querySelectorAll('.slot').forEach(slot => {
-            slot.addEventListener('click', function() {
-                if (this.classList.contains('disabled')) {
-                    return;
-                }
-                
-                document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedTime = this.dataset.time;
-                
-                document.getElementById('participantsSection').classList.add('active');
-                document.getElementById('participantsSection').scrollIntoView({ behavior: 'smooth' });
-            });
-        });
-
-        document.querySelectorAll('.participant-option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.participant-option').forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedParticipants = this.dataset.count;
-                pricePerPerson = this.dataset.price;
-                
-                const total = selectedParticipants * pricePerPerson;
-                const priceInfo = document.getElementById('priceInfo');
-                priceInfo.textContent = `Total: ${selectedParticipants} personnes × ${pricePerPerson}€ = ${total}€`;
-                priceInfo.style.display = 'block';
-                
-                document.getElementById('formSection').classList.add('active');
-                document.getElementById('formSection').scrollIntoView({ behavior: 'smooth' });
-            });
-        });
-
-        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const phone = document.getElementById('phone').value;
-            const total = selectedParticipants * pricePerPerson;
-            
-            const bookingData = {
-                date: formatDate(selectedDate),
-                heure: selectedTime,
-                participants: selectedParticipants,
-                prixParPersonne: pricePerPerson + '€',
-                total: total + '€',
-                nom: name,
-                email: email,
-                telephone: phone
-            };
-            
-            try {
-                const response = await fetch(SHEET_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(bookingData)
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    const details = `
-                        <p><strong>Date:</strong> ${formatDate(selectedDate)}</p>
-                        <p><strong>Heure:</strong> ${selectedTime}</p>
-                        <p><strong>Participants:</strong> ${selectedParticipants} personnes</p>
-                        <p><strong>Prix:</strong> ${pricePerPerson}€/personne</p>
-                        <p><strong>Total:</strong> ${total}€</p>
-                        <p><strong>Nom:</strong> ${name}</p>
-                        <p><strong>Email:</strong> ${email}</p>
-                        <p><strong>Téléphone:</strong> ${phone}</p>
-                    `;
-                    
-                    document.getElementById('confirmationDetails').innerHTML = details;
-                    
-                    document.querySelectorAll('.section, .calendar-container').forEach(s => s.style.display = 'none');
-                    document.getElementById('confirmation').classList.add('active');
-                    document.getElementById('confirmation').scrollIntoView({ behavior: 'smooth' });
-                    
-                    await loadBookedSlots();
-                } else {
-                    alert('Erreur lors de la réservation. Veuillez réessayer.');
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion. Veuillez réessayer.');
-            }
-        });
-
-        loadBookedSlots().then(() => {
-            renderCalendar();
-        });
-    </script>
+    init();
+  </script>
 </body>
 </html>
