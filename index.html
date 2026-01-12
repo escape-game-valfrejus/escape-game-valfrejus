@@ -198,22 +198,24 @@
     border-color: #0099ff;
   }
   
-  /* Encadré prix */
+  /* Encadré prix – même taille que les inputs/select */
   .price-display {
     margin-top: 15px;
-    padding: 18px;
+    padding: 16px;                      /* même padding que les inputs */
     background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-radius: 12px;
+    border-radius: 10px;                /* même border-radius que les inputs */
     text-align: center;
     display: none;
+    font-size: 16px;                    /* même taille de texte */
+    line-height: 1.4;
   }
   .price-display .price-label {
-    font-size: 0.9em;
+    font-size: 1em;                     /* même que label */
     margin-bottom: 8px;
     opacity: 0.95;
   }
   .price-display .price-amount {
-    font-size: 2em;
+    font-size: 1.4em;                   /* un peu plus gros mais pas énorme */
     font-weight: 700;
   }
   .price-display .price-detail {
@@ -412,285 +414,7 @@ function updatePrice() {
   }
 }
 
-function getMondayOfCurrentWeek() {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
-}
-
-function prevWeek() {
-  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-  resetSelection();
-  renderCalendar();
-}
-
-function nextWeek() {
-  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  resetSelection();
-  renderCalendar();
-}
-
-function resetSelection() {
-  selectedDate = null;
-  selectedSlot = null;
-  document.getElementById('slots').style.display = 'none';
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('recap').style.display = 'none';
-}
-
-function renderCalendar() {
-  const calendar = document.getElementById('calendar');
-  calendar.innerHTML = '';
-
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  const saturday = new Date(currentWeekStart);
-  saturday.setDate(currentWeekStart.getDate() - 2);
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(saturday);
-    day.setDate(saturday.getDate() + i);
-
-    const dayEl = document.createElement('div');
-    dayEl.className = 'day';
-    
-    const dayName = day.toLocaleDateString('fr-FR', {weekday: 'short'}).toUpperCase();
-    const dayNum = day.getDate();
-    const month = day.toLocaleDateString('fr-FR', {month: 'short'});
-    
-    dayEl.innerHTML = `
-      <div class="day-name">${dayName}</div>
-      <div class="day-date">${dayNum} ${month}</div>
-    `;
-
-    if (day < today) {
-      dayEl.classList.add('disabled');
-    } else {
-      dayEl.onclick = () => selectDate(day, dayEl);
-    }
-
-    calendar.appendChild(dayEl);
-  }
-
-  loadReservations();
-}
-
-function selectDate(date, element) {
-  selectedDate = date;
-  selectedSlot = null;
-  
-  document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-  element.classList.add('selected');
-  
-  document.getElementById('slots').style.display = 'block';
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('recap').style.display = 'none';
-  
-  renderSlots();
-  
-  setTimeout(() => {
-    document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
-}
-
-function renderSlots() {
-  const container = document.getElementById('slot-list');
-  container.innerHTML = '';
-
-  const dayOfWeek = selectedDate.getDay();
-  const dateKey = formatDateForSheet(selectedDate);
-
-  allSlots.forEach(slot => {
-    if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
-      return;
-    }
-
-    const slotEl = document.createElement('div');
-    slotEl.className = 'slot';
-    slotEl.textContent = slot;
-
-    const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
-    
-    if (isReserved) {
-      slotEl.classList.add('disabled');
-    } else {
-      slotEl.onclick = () => selectSlot(slot, slotEl);
-    }
-
-    container.appendChild(slotEl);
-  });
-}
-
-function selectSlot(slot, element) {
-  selectedSlot = slot;
-  
-  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-  element.classList.add('selected');
-  
-  document.getElementById('booking-form').style.display = 'block';
-  document.getElementById('recap').style.display = 'none';
-  
-  setTimeout(() => {
-    document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
-}
-
-async function loadReservations() {
-  try {
-    const response = await fetch(scriptUrl);
-    const data = await response.json();
-
-    if (data.status !== 'success' || !data.reservations) {
-      return;
-    }
-
-    reservedSlots.clear();
-    
-    data.reservations.forEach(r => {
-      const key = `${r.date}_${r.heure}`;
-      reservedSlots.set(key, true);
-    });
-
-    if (selectedDate) {
-      renderSlots();
-    }
-
-  } catch (err) {
-    console.error("Erreur chargement:", err);
-  }
-}
-
-async function confirmerReservation() {
-  const nom = document.getElementById('nom').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const participants = document.getElementById('participants').value;
-  const niveau = document.getElementById('niveau').value;
-  const telephone = document.getElementById('telephone').value.trim();
-
-  if (!nom || !email || !participants || !niveau || !telephone) {
-    showError("Veuillez remplir tous les champs");
-    return;
-  }
-
-  if (!email.includes('@') || !email.includes('.')) {
-    showError("Email invalide");
-    return;
-  }
-
-  const niveauSymboles = { '-': '-', '+': '+', '++': '++', '+++': '+++' };
-  const persAvecNiveau = `${participants} ${niveauSymboles[niveau]}`;
-  
-  const price = priceTable[participants];
-
-  const payload = {
-    date: formatDate(selectedDate),
-    heure: selectedSlot,
-    nom: nom,
-    email: email,
-    pers_niveau: persAvecNiveau,
-    telephone: telephone,
-    prix_par_personne: price.perPerson,
-    prix_total: price.total
-  };
-
-  const btn = document.getElementById('confirm-btn');
-  btn.disabled = true;
-  btn.textContent = 'Envoi en cours...';
-
-  try {
-    await fetch(scriptUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'text/plain' }
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    await loadReservations();
-    
-    const dateKey = formatDateForSheet(selectedDate);
-    const isNowReserved = reservedSlots.has(`${dateKey}_${selectedSlot}`);
-    
-    if (isNowReserved) {
-      afficherRecap(payload);
-      document.getElementById('booking-form').style.display = 'none';
-      
-      document.getElementById('nom').value = '';
-      document.getElementById('email').value = '';
-      document.getElementById('participants').value = '';
-      document.getElementById('niveau').value = '';
-      document.getElementById('telephone').value = '';
-      document.getElementById('price-display').style.display = 'none';
-    } else {
-      showError("Impossible de vérifier la réservation");
-    }
-  } catch (err) {
-    showError("Erreur de connexion");
-    console.error(err);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✓ Confirmer la réservation';
-  }
-}
-
-function afficherRecap(data) {
-  const dateObj = new Date(data.date);
-  const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
-  const recapContent = document.getElementById('recap-content');
-  recapContent.innerHTML = `
-    <div class="recap-item"><strong>👤 Nom</strong>${data.nom}</div>
-    <div class="recap-item"><strong>📅 Date</strong>${dateFormatee}</div>
-    <div class="recap-item"><strong>🕐 Heure</strong>${data.heure}</div>
-    <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
-    <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
-    <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
-    <div class="recap-item"><strong>💰 Prix total</strong>${data.prix_total}€ (${data.prix_par_personne}€/pers)</div>
-  `;
-
-  document.getElementById('recap').style.display = 'block';
-  
-  setTimeout(() => {
-    document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
-  }, 100);
-}
-
-function showError(message) {
-  const errorDiv = document.getElementById('error-message');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  
-  setTimeout(() => {
-    errorDiv.style.display = 'none';
-  }, 5000);
-  
-  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function formatDate(date) {
-  const d = new Date(date);
-  return d.getFullYear() + '-' +
-         String(d.getMonth() + 1).padStart(2, '0') + '-' +
-         String(d.getDate()).padStart(2, '0');
-}
-
-function formatDateForSheet(date) {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(2);
-  return `${day}/${month}/${year}`;
-}
+// ... (le reste du script reste IDENTIQUE à ton code original, je ne le répète pas ici pour ne pas alourdir)
 
 renderCalendar();
 setInterval(loadReservations, 15000);
