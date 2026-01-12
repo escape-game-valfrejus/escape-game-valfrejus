@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -168,7 +167,7 @@
       <option value="6">6</option>
     </select>
 
-    <label>Niveau des joueurs :</label>
+    <label>Niveau estimé de votre groupe de joueurs :</label>
     <select id="niveau" required>
       <option value="">Choisir...</option>
       <option value="-">Première fois (-)</option>
@@ -197,18 +196,19 @@ const scriptUrl = 'https://corsproxy.io/?' + encodeURIComponent(
   'https://script.google.com/macros/s/AKfycbzFURmiwkYQ8fGSqP8Lv0AMjskEZ7M0ppyGptjchKIiOzlIKXK64_5L5LKpT0KP3qtbTg/exec'
 );
 
-let currentWeekStart = getMondayOfCurrentWeek(); // ← lundi de la semaine actuelle
+let currentWeekStart = getMondayOfCurrentWeek(); // lundi actuel
+let selectedDate = null;
+let selectedSlot = null;
 
-// Créneaux horaires (avec règles spéciales sam/dim)
+// Créneaux horaires
 const allSlots = ['10h', '12h', '14h', '17h', '19h'];
 
-// Fonction pour obtenir le lundi de la semaine courante
+// Obtenir le lundi de la semaine courante
 function getMondayOfCurrentWeek() {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0=dim, 1=lun, ..., 6=sam
   
-  // Calcul du lundi : on soustrait le jour actuel (ajusté pour lundi = 1)
-  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek); // Si dimanche → lundi précédent
+  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
   const monday = new Date(today);
   monday.setDate(today.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
@@ -217,7 +217,7 @@ function getMondayOfCurrentWeek() {
 }
 
 // ────────────────────────────────────────────────
-// Fonctions de navigation semaines
+// Navigation
 // ────────────────────────────────────────────────
 function prevWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() - 7);
@@ -230,7 +230,7 @@ function nextWeek() {
 }
 
 // ────────────────────────────────────────────────
-// Générer le calendrier (semaine courante)
+// Affichage calendrier
 // ────────────────────────────────────────────────
 function renderCalendar() {
   const calendar = document.getElementById('calendar');
@@ -239,8 +239,8 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // On affiche 7 jours : samedi → vendredi
-  for (let i = -2; i < 5; i++) {  // -2 = samedi, -1 = dimanche, 0 = lundi, ..., +4 = vendredi
+  // -2 = samedi, -1 = dimanche, 0 = lundi, +1 mardi ... +4 vendredi
+  for (let i = -2; i <= 4; i++) {
     const day = new Date(currentWeekStart);
     day.setDate(currentWeekStart.getDate() + i);
 
@@ -260,33 +260,26 @@ function renderCalendar() {
     calendar.appendChild(dayEl);
   }
 
-  // Charger les réservations existantes au démarrage et toutes les 10s
   loadReservations();
   setInterval(loadReservations, 10000);
 }
 
-// ────────────────────────────────────────────────
-// Sélection d'une date
-// ────────────────────────────────────────────────
+// Sélection date
 function selectDate(date) {
   selectedDate = date;
   document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
   event.target.closest('.day').classList.add('selected');
-
   renderSlots();
 }
 
-// ────────────────────────────────────────────────
-// Afficher les créneaux pour la date sélectionnée
-// ────────────────────────────────────────────────
+// Affichage créneaux
 function renderSlots() {
   const container = document.getElementById('slot-list');
   container.innerHTML = '';
 
-  const dayOfWeek = selectedDate.getDay(); // 0=dim, 1=lun, ..., 6=sam
+  const dayOfWeek = selectedDate.getDay();
 
   allSlots.forEach(slot => {
-    // Fermer 10h et 12h les samedis et dimanches
     if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
       return;
     }
@@ -295,7 +288,6 @@ function renderSlots() {
     slotEl.className = 'slot';
     slotEl.textContent = slot;
 
-    // Vérifier si déjà réservé (sera mis à jour par loadReservations)
     if (slotEl.dataset.reserved === 'true') {
       slotEl.classList.add('disabled');
     } else {
@@ -308,27 +300,21 @@ function renderSlots() {
   document.getElementById('booking-form').style.display = 'none';
 }
 
-// ────────────────────────────────────────────────
-// Sélection d'un créneau
-// ────────────────────────────────────────────────
+// Sélection créneau
 function selectSlot(slot) {
   selectedSlot = slot;
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
   event.target.classList.add('selected');
-
   document.getElementById('booking-form').style.display = 'block';
 }
 
-// ────────────────────────────────────────────────
-// Charger les réservations depuis Google Sheet (toutes les 10s)
-// ────────────────────────────────────────────────
+// Charger réservations
 async function loadReservations() {
   try {
     const response = await fetch(scriptUrl);
     const data = await response.json();
 
     if (data.status === 'success' && data.reservations) {
-      // Marquer les créneaux occupés
       document.querySelectorAll('.slot').forEach(slotEl => {
         const slotTime = slotEl.textContent;
         const isReserved = data.reservations.some(r =>
@@ -346,13 +332,11 @@ async function loadReservations() {
       });
     }
   } catch (err) {
-    console.error("Erreur chargement réservations:", err);
+    console.error("Erreur chargement:", err);
   }
 }
 
-// ────────────────────────────────────────────────
-// Confirmer la réservation
-// ────────────────────────────────────────────────
+// Confirmer
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
   const participants = document.getElementById('participants').value;
@@ -385,9 +369,9 @@ async function confirmerReservation() {
     const result = await response.json();
 
     if (result.status === 'success') {
-      alert("Réservation enregistrée avec succès !");
+      alert("Réservation enregistrée !");
       document.getElementById('booking-form').style.display = 'none';
-      loadReservations(); // Rafraîchir immédiatement
+      loadReservations();
     } else {
       alert("Erreur : " + result.message);
     }
@@ -397,9 +381,7 @@ async function confirmerReservation() {
   }
 }
 
-// ────────────────────────────────────────────────
-// Format date YYYY-MM-DD pour le script
-// ────────────────────────────────────────────────
+// Format date YYYY-MM-DD
 function formatDate(date) {
   const d = new Date(date);
   return d.getFullYear() + '-' + 
@@ -408,8 +390,6 @@ function formatDate(date) {
 }
 
 // Initialisation
-let selectedDate = null;
-let selectedSlot = null;
 renderCalendar();
 </script>
 </body>
