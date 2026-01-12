@@ -1,400 +1,643 @@
-// ========================================
-// PARTIE 1 : CRÉATION ET NAVIGATION DU PLANNING
-// ========================================
-function creerPlanningEscapeGame() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  
-  // Effacer tout le contenu existant
-  sheet.clear();
-  
-  // LIGNE 1 : Jours de la semaine
-  sheet.getRange('C1').setValue('SAMEDI');
-  sheet.getRange('D1').setValue('DIMANCHE');
-  sheet.getRange('E1').setValue('LUNDI');
-  sheet.getRange('F1').setValue('MARDI');
-  sheet.getRange('G1').setValue('MERCREDI');
-  sheet.getRange('H1').setValue('JEUDI');
-  sheet.getRange('I1').setValue('VENDREDI');
-  
-  // LIGNE 2 : Formules pour les dates (basées sur SAMEDI en B19)
-  sheet.getRange('C2').setFormula('=TEXT(B19;"DD/MM/YY")');
-  sheet.getRange('D2').setFormula('=TEXT(B19+1;"DD/MM/YY")');
-  sheet.getRange('E2').setFormula('=TEXT(B19+2;"DD/MM/YY")');
-  sheet.getRange('F2').setFormula('=TEXT(B19+3;"DD/MM/YY")');
-  sheet.getRange('G2').setFormula('=TEXT(B19+4;"DD/MM/YY")');
-  sheet.getRange('H2').setFormula('=TEXT(B19+5;"DD/MM/YY")');
-  sheet.getRange('I2').setFormula('=TEXT(B19+6;"DD/MM/YY")');
-  
-  // Créneaux horaires et labels
-  const creneaux = [
-    { ligne: 3, heure: '10h' },
-    { ligne: 6, heure: '12h' },
-    { ligne: 9, heure: '14h' },
-    { ligne: 12, heure: '17h' },
-    { ligne: 15, heure: '19h' }
-  ];
-  
-  creneaux.forEach(creneau => {
-    // Colonne A : Heure
-    sheet.getRange(creneau.ligne, 1).setValue(creneau.heure);
-    
-    // Colonne B : Labels
-    sheet.getRange(creneau.ligne, 2).setValue('nom:');
-    sheet.getRange(creneau.ligne + 1, 2).setValue('nbr de pers:');
-    sheet.getRange(creneau.ligne + 2, 2).setValue('tel:');
-  });
-  
-  // LIGNE 19 : Date du SAMEDI de la semaine
-  sheet.getRange('A19').setValue('SAMEDI DE LA SEMAINE');
-  sheet.getRange('B19').setValue('11/01/2026');
-  
-  // Mise en forme
-  sheet.getRange('C1:I1').setFontWeight('bold').setHorizontalAlignment('center').setBackground('#d9d9d9');
-  sheet.getRange('C2:I2').setFontWeight('bold').setHorizontalAlignment('center');
-  sheet.getRange('A3:A17').setFontWeight('bold').setVerticalAlignment('middle').setHorizontalAlignment('center');
-  sheet.getRange('B3:B17').setHorizontalAlignment('left');
-  
-  // Largeur des colonnes
-  sheet.setColumnWidth(1, 60);
-  sheet.setColumnWidth(2, 100);
-  for (let i = 3; i <= 9; i++) {
-    sheet.setColumnWidth(i, 120);
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Réservation Escape Game Valfréjus</title>
+<style>
+  * { 
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    touch-action: pan-y;
+  }
+  h1 {
+    margin: 0;
+    padding: 20px 15px;
+    font-size: 1.4em;
+    text-align: center;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .container {
+    width: 100%;
+    padding: 15px;
+    padding-bottom: 100px;
   }
   
-  // Hauteur des lignes
-  sheet.setRowHeight(1, 30);
-  sheet.setRowHeight(2, 30);
-  
-  // Bordures
-  sheet.getRange('A1:I17').setBorder(true, true, true, true, true, true);
-  
-  // Masquer la ligne 19
-  sheet.hideRows(19);
-  
-  // Formater B19 comme date
-  sheet.getRange('B19').setNumberFormat('dd/mm/yyyy');
-  
-  SpreadsheetApp.getUi().alert('✅ Planning créé avec succès !\n\nPour changer de semaine, cliquez sur le menu "🎮 Escape Game"');
-}
-
-// Menu personnalisé
-function onOpen() {
-  const ui = SpreadsheetApp.getUi();
-  ui.createMenu('🎮 Escape Game')
-    .addItem('Créer le planning', 'creerPlanningEscapeGame')
-    .addItem('Semaine suivante', 'semaineSuivante')
-    .addItem('Semaine précédente', 'semainePrecedente')
-    .addToUi();
-}
-
-// Notification automatique lors de modifications manuelles du planning
-function onEdit(e) {
-  try {
-    const sheet = e.source.getActiveSheet();
-    const range = e.range;
-    const row = range.getRow();
-    const col = range.getColumn();
-    
-    // Vérifier si c'est une modification dans la zone du planning (lignes 3-17, colonnes C-I)
-    if (row >= 3 && row <= 17 && col >= 3 && col <= 9) {
-      const user = Session.getActiveUser().getEmail() || "Un utilisateur";
-      const cellAddress = range.getA1Notation();
-      const oldValue = e.oldValue || "(vide)";
-      const newValue = e.value || "(vide)";
-      
-      // Récupérer le jour et l'heure concernés
-      const dayName = sheet.getRange(1, col).getValue();
-      const dayDate = sheet.getRange(2, col).getValue();
-      
-      // Déterminer le créneau horaire
-      let timeSlot = "";
-      if (row >= 3 && row <= 5) timeSlot = "10h";
-      else if (row >= 6 && row <= 8) timeSlot = "12h";
-      else if (row >= 9 && row <= 11) timeSlot = "14h";
-      else if (row >= 12 && row <= 14) timeSlot = "17h";
-      else if (row >= 15 && row <= 17) timeSlot = "19h";
-      
-      const sujet = "⚠️ Modification manuelle du planning Escape Game";
-      const corps = `
-Une modification a été effectuée sur le planning :
-
-👤 Modifié par : ${user}
-📅 Jour : ${dayName} ${dayDate}
-🕐 Créneau : ${timeSlot}
-📍 Cellule : ${cellAddress}
-
-Ancienne valeur : ${oldValue}
-Nouvelle valeur : ${newValue}
-
----
-Notification automatique - Escape Game Valfréjus
-      `;
-      
-      MailApp.sendEmail("juliencoudou@hotmail.com", sujet, corps);
-    }
-  } catch (error) {
-    Logger.log("Erreur notification modification: " + error.toString());
+  /* Navigation simplifiée */
+  .nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 80px;
+    z-index: 90;
+    background: #000;
+    padding: 10px 0;
   }
-}
-
-// Navigation semaines
-function semaineSuivante() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const dateActuelle = new Date(sheet.getRange('B19').getValue());
-  dateActuelle.setDate(dateActuelle.getDate() + 7);
-  sheet.getRange('B19').setValue(dateActuelle);
-  SpreadsheetApp.getUi().alert('➡️ Semaine suivante !');
-}
-
-function semainePrecedente() {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const dateActuelle = new Date(sheet.getRange('B19').getValue());
-  dateActuelle.setDate(dateActuelle.getDate() - 7);
-  sheet.getRange('B19').setValue(dateActuelle);
-  SpreadsheetApp.getUi().alert('⬅️ Semaine précédente !');
-}
-
-// ========================================
-// PARTIE 2 : GESTION DES RÉSERVATIONS EN LIGNE
-// ========================================
-
-// Lire les réservations existantes (GET)
-function doGet(e) {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const reservations = [];
-    
-    // Lire les dates de la semaine (ligne 2, colonnes C à I)
-    const datesRange = sheet.getRange('C2:I2');
-    const datesValues = datesRange.getValues()[0];
-    
-    // Créneaux horaires et leurs lignes correspondantes
-    const creneaux = [
-      { heure: '10h', ligneNom: 3 },
-      { heure: '12h', ligneNom: 6 },
-      { heure: '14h', ligneNom: 9 },
-      { heure: '17h', ligneNom: 12 },
-      { heure: '19h', ligneNom: 15 }
-    ];
-    
-    // Pour chaque jour (colonnes C=3 à I=9)
-    for (let colIndex = 0; colIndex < 7; colIndex++) {
-      let dateCell = datesValues[colIndex];
-      
-      // Convertir la date en format DD/MM/YY
-      let dateStr;
-      if (dateCell instanceof Date) {
-        dateStr = Utilities.formatDate(dateCell, Session.getScriptTimeZone(), "dd/MM/yy");
-      } else {
-        dateStr = dateCell.toString().trim();
-      }
-      
-      const colLetter = String.fromCharCode(67 + colIndex); // C=67, D=68...
-      
-      // Pour chaque créneau horaire
-      creneaux.forEach(creneau => {
-        // Lire la cellule "nom:" pour voir si le créneau est occupé
-        const nomCell = sheet.getRange(colLetter + creneau.ligneNom).getValue();
-        
-        // Si la cellule nom contient quelque chose, le créneau est réservé
-        if (nomCell && nomCell.toString().trim() !== '') {
-          reservations.push({
-            date: dateStr,
-            heure: creneau.heure
-          });
-        }
-      });
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'success',
-      reservations: reservations
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'error',
-      message: error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+  .nav-btn {
+    flex: 1;
+    background: #333;
+    color: white;
+    border: none;
+    padding: 16px 10px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
   }
+  .nav-btn:active {
+    transform: scale(0.95);
+    background: #444;
+  }
+  
+  /* Calendrier mobile optimisé */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+  .day {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .day:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+  .day-name {
+    font-size: 0.85em;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #aaa;
+  }
+  .day-date {
+    font-size: 1.3em;
+    font-weight: 700;
+  }
+  .day.disabled {
+    background: #0a0a0a;
+    color: #444;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .day.selected {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-color: #3399ff;
+    transform: scale(1.02);
+  }
+  
+  /* Créneaux horaires */
+  .slots {
+    margin: 25px 0;
+  }
+  .slots h2 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  .slot {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: 700;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    position: relative;
+  }
+  .slot:active:not(.disabled) {
+    transform: scale(0.98);
+  }
+  .slot.disabled {
+    background: #0a0a0a;
+    color: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .slot.disabled::after {
+    content: ' RÉSERVÉ';
+    color: #ff4444;
+    font-size: 0.7em;
+    display: block;
+    margin-top: 5px;
+  }
+  .slot.selected {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-color: #3399ff;
+    transform: scale(1.02);
+  }
+  
+  /* Formulaire mobile */
+  .form-section {
+    margin: 25px 0;
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 15px;
+  }
+  .form-section h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin: 18px 0 8px;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    background: #0a0a0a;
+    color: white;
+    border: 2px solid #333;
+    border-radius: 10px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #0099ff;
+  }
+  
+  /* Bouton de confirmation */
+  button#confirm-btn {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    color: white;
+    border: none;
+    padding: 20px;
+    font-size: 1.2em;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 25px;
+    width: 100%;
+    transition: all 0.2s;
+    touch-action: manipulation;
+  }
+  button#confirm-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  button#confirm-btn:disabled {
+    background: #555;
+    opacity: 0.6;
+  }
+  
+  /* Récapitulatif */
+  .recap {
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-radius: 15px;
+    display: none;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .recap h2 {
+    margin-top: 0;
+    font-size: 1.5em;
+    text-align: center;
+  }
+  .recap-item {
+    margin: 15px 0;
+    font-size: 1.05em;
+    padding: 15px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    word-break: break-word;
+  }
+  .recap-item strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    opacity: 0.9;
+  }
+  
+  /* Messages d'erreur */
+  .error {
+    background: #ff4444;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: none;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: #0099ff;
+    font-size: 1.1em;
+  }
+  
+  /* Cache sections initialement */
+  #slots, #booking-form, #recap {
+    display: none;
+  }
+  
+  /* Smooth scroll pour iOS */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎮 Réservation Escape Game<br>Valfréjus</h1>
+
+<div class="container">
+  <div class="error" id="error-message"></div>
+  
+  <div class="nav-buttons">
+    <button class="nav-btn" onclick="prevWeek()">← Semaine précédente</button>
+    <button class="nav-btn" onclick="nextWeek()">Semaine suivante →</button>
+  </div>
+
+  <div id="calendar" class="calendar"></div>
+
+  <div class="slots" id="slots">
+    <h2>⏰ Créneaux disponibles</h2>
+    <div id="slot-list"></div>
+  </div>
+
+  <div class="form-section" id="booking-form">
+    <h2>📝 Vos informations</h2>
+    
+    <label>Nom de famille</label>
+    <input type="text" id="nom" required autocomplete="family-name">
+
+    <label>Email</label>
+    <input type="email" id="email" required placeholder="votre@email.com" autocomplete="email">
+
+    <label>Nombre de participants</label>
+    <select id="participants" required>
+      <option value="">Choisir...</option>
+      <option value="2">2 personnes</option>
+      <option value="3">3 personnes</option>
+      <option value="4">4 personnes</option>
+      <option value="5">5 personnes</option>
+      <option value="6">6 personnes</option>
+    </select>
+
+    <label>Niveau de votre groupe</label>
+    <select id="niveau" required>
+      <option value="">Choisir...</option>
+      <option value="-">Première fois (-)</option>
+      <option value="+">Débutant (+)</option>
+      <option value="++">Intermédiaire (++)</option>
+      <option value="+++">Bon (+++)</option>
+    </select>
+
+    <label>Téléphone</label>
+    <input type="tel" id="telephone" required autocomplete="tel">
+
+    <button id="confirm-btn" onclick="confirmerReservation()">✓ Confirmer la réservation</button>
+  </div>
+
+  <div class="recap" id="recap">
+    <h2>✅ Réservation confirmée !</h2>
+    <div id="recap-content"></div>
+    <p style="margin-top: 20px; text-align: center; opacity: 0.95;">
+      📧 Un email de confirmation vous a été envoyé
+    </p>
+  </div>
+</div>
+
+<script>
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxW43NkwvcrnR_z7LYTioIm5y6CxuUaKkYEcC3HjW6ZWCcuxAwgT-NlbheJEsVAz2YqXQ/exec';
+
+let currentWeekStart = getMondayOfCurrentWeek();
+let selectedDate = null;
+let selectedSlot = null;
+let reservedSlots = new Map();
+
+const allSlots = ['10h', '12h', '14h', '17h', '19h'];
+
+function getMondayOfCurrentWeek() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday;
 }
 
-// Enregistrer une nouvelle réservation (POST)
-function doPost(e) {
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const data = JSON.parse(e.postData.contents);
+function prevWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  resetSelection();
+  renderCalendar();
+}
+
+function nextWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  resetSelection();
+  renderCalendar();
+}
+
+function resetSelection() {
+  selectedDate = null;
+  selectedSlot = null;
+  document.getElementById('slots').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
+}
+
+function renderCalendar() {
+  const calendar = document.getElementById('calendar');
+  calendar.innerHTML = '';
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const saturday = new Date(currentWeekStart);
+  saturday.setDate(currentWeekStart.getDate() - 2);
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(saturday);
+    day.setDate(saturday.getDate() + i);
+
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day';
     
-    // Date envoyée par la page : "2026-01-13" (format ISO)
-    const sentDate = data.date;
-    const [y, m, d] = sentDate.split('-');
-    const dayNum = parseInt(d, 10);
-    const monthNum = parseInt(m, 10);
-    const yearShort = y.slice(2);
+    const dayName = day.toLocaleDateString('fr-FR', {weekday: 'short'}).toUpperCase();
+    const dayNum = day.getDate();
+    const month = day.toLocaleDateString('fr-FR', {month: 'short'});
     
-    // Lire la date de référence (SAMEDI en B19)
-    const samediDate = new Date(sheet.getRange('B19').getValue());
-    
-    // Calculer l'index de colonne en fonction du jour de la semaine
-    const targetDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    
-    // SAMEDI = colonne C (3), DIMANCHE = D (4), LUNDI = E (5), etc.
-    const joursSemaine = ['DIMANCHE', 'LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
-    const dayOfWeek = targetDate.getDay(); // 0=dimanche, 1=lundi, ..., 6=samedi
-    
-    // Mapping jour de la semaine -> colonne
-    let colIndex;
-    if (dayOfWeek === 6) { // Samedi
-      colIndex = 3; // C
-    } else if (dayOfWeek === 0) { // Dimanche
-      colIndex = 4; // D
-    } else { // Lundi (1) à Vendredi (5)
-      colIndex = 4 + dayOfWeek; // E (5) à I (9)
-    }
-    
-    // Vérifier que la date correspond bien à la semaine affichée
-    const cellDate = sheet.getRange(2, colIndex).getValue();
-    let cellDateStr;
-    if (cellDate instanceof Date) {
-      cellDateStr = Utilities.formatDate(cellDate, Session.getScriptTimeZone(), "dd/MM/yy");
+    dayEl.innerHTML = `
+      <div class="day-name">${dayName}</div>
+      <div class="day-date">${dayNum} ${month}</div>
+    `;
+
+    if (day < today) {
+      dayEl.classList.add('disabled');
     } else {
-      cellDateStr = cellDate.toString().trim();
+      dayEl.onclick = () => selectDate(day, dayEl);
     }
-    
-    const expectedDateStr1 = `${dayNum}/${monthNum}/${yearShort}`;
-    const expectedDateStr2 = `${dayNum.toString().padStart(2,'0')}/${monthNum.toString().padStart(2,'0')}/${yearShort}`;
-    
-    if (cellDateStr !== expectedDateStr1 && cellDateStr !== expectedDateStr2) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'error',
-        message: `Date non trouvée. Attendu: ${expectedDateStr1} ou ${expectedDateStr2}, Trouvé: ${cellDateStr}`
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // Trouver la ligne du créneau
-    const heure = data.heure.trim();
-    const creneauxMap = {
-      '10h': 3,
-      '12h': 6,
-      '14h': 9,
-      '17h': 12,
-      '19h': 15
-    };
-    
-    const rowOffset = creneauxMap[heure];
-    
-    if (!rowOffset) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'error',
-        message: 'Créneau horaire non valide: ' + heure
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // Vérifier si le créneau est déjà occupé
-    const existingNom = sheet.getRange(rowOffset, colIndex).getValue();
-    if (existingNom && existingNom.toString().trim() !== '') {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: 'error',
-        message: 'Ce créneau est déjà réservé'
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // Écrire les informations dans les 3 lignes
-    sheet.getRange(rowOffset, colIndex).setValue(data.nom.trim());
-    sheet.getRange(rowOffset + 1, colIndex).setValue(data.pers_niveau.trim());
-    sheet.getRange(rowOffset + 2, colIndex).setValue(data.telephone.trim());
-    
-    // Envoyer les emails de confirmation
-    envoyerEmailConfirmation(data);
-    
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'success',
-      message: 'Réservation enregistrée avec succès',
-      data: {
-        nom: data.nom,
-        date: data.date,
-        heure: data.heure,
-        participants: data.pers_niveau
-      }
-    })).setMimeType(ContentService.MimeType.JSON);
-    
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      status: 'error',
-      message: error.message || error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+
+    calendar.appendChild(dayEl);
   }
+
+  loadReservations();
 }
 
-// Fonction pour envoyer les emails de confirmation
-function envoyerEmailConfirmation(data) {
+function selectDate(date, element) {
+  selectedDate = date;
+  selectedSlot = null;
+  
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+  element.classList.add('selected');
+  
+  document.getElementById('slots').style.display = 'block';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
+  
+  renderSlots();
+  
+  // Scroll vers les créneaux
+  setTimeout(() => {
+    document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+function renderSlots() {
+  const container = document.getElementById('slot-list');
+  container.innerHTML = '';
+
+  const dayOfWeek = selectedDate.getDay();
+  const dateKey = formatDateForSheet(selectedDate);
+
+  allSlots.forEach(slot => {
+    if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
+      return;
+    }
+
+    const slotEl = document.createElement('div');
+    slotEl.className = 'slot';
+    slotEl.textContent = slot;
+
+    const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
+    
+    if (isReserved) {
+      slotEl.classList.add('disabled');
+    } else {
+      slotEl.onclick = () => selectSlot(slot, slotEl);
+    }
+
+    container.appendChild(slotEl);
+  });
+}
+
+function selectSlot(slot, element) {
+  selectedSlot = slot;
+  
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  element.classList.add('selected');
+  
+  document.getElementById('booking-form').style.display = 'block';
+  document.getElementById('recap').style.display = 'none';
+  
+  // Scroll vers le formulaire
+  setTimeout(() => {
+    document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+async function loadReservations() {
   try {
-    // Formater la date en français
-    const [y, m, d] = data.date.split('-');
-    const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-    const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    const response = await fetch(scriptUrl);
+    const data = await response.json();
+
+    if (data.status !== 'success' || !data.reservations) {
+      return;
+    }
+
+    reservedSlots.clear();
+    
+    data.reservations.forEach(r => {
+      const key = `${r.date}_${r.heure}`;
+      reservedSlots.set(key, true);
     });
-    
-    // ============================================
-    // EMAIL 1 : CONFIRMATION AU CLIENT
-    // ============================================
-    const sujetClient = "✅ Confirmation de réservation - Escape Game Valfréjus";
-    
-    const corpsClient = `
-Bonjour ${data.nom},
 
-Votre réservation a bien été enregistrée !
+    if (selectedDate) {
+      renderSlots();
+    }
 
-📋 RÉCAPITULATIF DE VOTRE RÉSERVATION :
-
-👤 Nom : ${data.nom}
-📅 Date : ${dateFormatee}
-🕐 Heure : ${data.heure}
-👥 Participants : ${data.pers_niveau}
-💰 Prix : ${data.prix_par_personne}€/personne - Total : ${data.prix_total}€
-📞 Téléphone : ${data.telephone}
-📧 Email : ${data.email}
-
-Nous vous attendons avec impatience pour cette aventure à Valfréjus !
-
-En cas de besoin, n'hésitez pas à nous contacter au 0479053376.
-
-Cordialement,
-L'équipe Escape Game Valfréjus
-    `;
-    
-    MailApp.sendEmail(data.email, sujetClient, corpsClient);
-    
-    // ============================================
-    // EMAIL 2 : NOTIFICATION POUR JULIEN
-    // ============================================
-    const sujetJulien = "🎮 Nouvelle réservation Escape Game - " + dateFormatee + " à " + data.heure;
-    
-    const corpsJulien = `
-NOUVELLE RÉSERVATION ENREGISTRÉE !
-
-📋 DÉTAILS DE LA RÉSERVATION :
-
-👤 Nom : ${data.nom}
-📅 Date : ${dateFormatee}
-🕐 Heure : ${data.heure}
-👥 Participants : ${data.pers_niveau}
-📞 Téléphone : ${data.telephone}
-📧 Email : ${data.email}
-
-Cette réservation a été automatiquement ajoutée au planning Google Sheets.
-
----
-Notification automatique - Escape Game Valfréjus
-    `;
-    
-    MailApp.sendEmail("juliencoudou@hotmail.com", sujetJulien, corpsJulien);
-    
-  } catch (error) {
-    Logger.log("Erreur envoi email: " + error.toString());
+  } catch (err) {
+    console.error("Erreur chargement:", err);
   }
 }
+
+async function confirmerReservation() {
+  const nom = document.getElementById('nom').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const participants = document.getElementById('participants').value;
+  const niveau = document.getElementById('niveau').value;
+  const telephone = document.getElementById('telephone').value.trim();
+
+  if (!nom || !email || !participants || !niveau || !telephone) {
+    showError("Veuillez remplir tous les champs");
+    return;
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    showError("Email invalide");
+    return;
+  }
+
+  const niveauSymboles = { '-': '-', '+': '+', '++': '++', '+++': '+++' };
+  const persAvecNiveau = `${participants} ${niveauSymboles[niveau]}`;
+
+  const payload = {
+    date: formatDate(selectedDate),
+    heure: selectedSlot,
+    nom: nom,
+    email: email,
+    pers_niveau: persAvecNiveau,
+    telephone: telephone
+  };
+
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await loadReservations();
+    
+    const dateKey = formatDateForSheet(selectedDate);
+    const isNowReserved = reservedSlots.has(`${dateKey}_${selectedSlot}`);
+    
+    if (isNowReserved) {
+      afficherRecap(payload);
+      document.getElementById('booking-form').style.display = 'none';
+      
+      // Reset formulaire
+      document.getElementById('nom').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('participants').value = '';
+      document.getElementById('niveau').value = '';
+      document.getElementById('telephone').value = '';
+    } else {
+      showError("Impossible de vérifier la réservation");
+    }
+  } catch (err) {
+    showError("Erreur de connexion");
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmer la réservation';
+  }
+}
+
+function afficherRecap(data) {
+  const dateObj = new Date(data.date);
+  const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  const recapContent = document.getElementById('recap-content');
+  recapContent.innerHTML = `
+    <div class="recap-item"><strong>👤 Nom</strong>${data.nom}</div>
+    <div class="recap-item"><strong>📅 Date</strong>${dateFormatee}</div>
+    <div class="recap-item"><strong>🕐 Heure</strong>${data.heure}</div>
+    <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
+    <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
+    <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
+  `;
+
+  document.getElementById('recap').style.display = 'block';
+  
+  setTimeout(() => {
+    document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
+  }, 100);
+}
+
+function showError(message) {
+  const errorDiv = document.getElementById('error-message');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 5000);
+  
+  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function formatDate(date) {
+  const d = new Date(date);
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function formatDateForSheet(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(2);
+  return `${day}/${month}/${year}`;
+}
+
+renderCalendar();
+setInterval(loadReservations, 15000);
+</script>
+</body>
+</html>
