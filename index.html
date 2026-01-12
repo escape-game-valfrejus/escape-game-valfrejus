@@ -255,7 +255,7 @@
 // ────────────────────────────────────────────────
 // CONFIGURATION - REMPLACE PAR TON URL
 // ────────────────────────────────────────────────
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwa24_VN_hqWpxaiEOkbuYbzAUg09y05qJywl37BtgCs5KlIAhjmIv18Q46eEorJbcQtw/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbye6mo-eGKhaF9nDMNsKH0fGFyLG-kS3XtwcKnym1No7pVDn9M2ZTWRk-Nn6o7bdxlFBg/exec';
 
 let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
@@ -454,11 +454,25 @@ async function confirmerReservation() {
   try {
     const response = await fetch(scriptUrl, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'text/plain' }
     });
 
-    const result = await response.json();
+    // Avec no-cors, on ne peut pas lire la réponse directement
+    // On attend un peu puis on recharge les réservations pour vérifier
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Recharger pour vérifier si ça a marché
+    await loadReservations();
+    
+    // Vérifier si le créneau est maintenant réservé
+    const dateKey = formatDateForSheet(selectedDate);
+    const isNowReserved = reservedSlots.has(`${dateKey}_${selectedSlot}`);
+    
+    const result = isNowReserved ? 
+      { status: 'success' } : 
+      { status: 'error', message: 'La réservation n\'a pas pu être vérifiée' };
 
     if (result.status === 'success') {
       // Afficher le récapitulatif
