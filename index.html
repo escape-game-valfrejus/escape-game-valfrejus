@@ -379,7 +379,7 @@
 </div>
 
 <script>
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbw8yh-fzy_lR8YHR1KTV7vhBEfGtiiU5fmuHEzSIuf8ZmWm6CeSOQfQVtVxbCrxgoM1Xw/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbyrrmJbxDuGothwUPxe50THoZlM4-_2YY8x2hJ4khMu0fTYnh0G6CpYqgIYCpa1T0VHbQ/exec';
 
 let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
@@ -506,7 +506,10 @@ function renderSlots() {
   const dateKey = formatDateForSheet(selectedDate);
 
   allSlots.forEach(slot => {
-    // PLUS DE BLOCAGE AUTOMATIQUE 10h/12h sam/dim → tu gères dans le Sheet
+    if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
+      return;
+    }
+
     const slotEl = document.createElement('div');
     slotEl.className = 'slot';
     slotEl.textContent = slot;
