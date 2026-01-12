@@ -2,158 +2,233 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Réservation Escape Game Valfréjus</title>
 <style>
-  * { box-sizing: border-box; }
+  * { 
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
   body {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
     background: #000;
     color: #fff;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    touch-action: pan-y;
   }
   h1 {
-    margin: 40px 0 20px;
-    font-size: 2.2em;
+    margin: 0;
+    padding: 20px 15px;
+    font-size: 1.4em;
     text-align: center;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    position: sticky;
+    top: 0;
+    z-index: 100;
   }
   .container {
-    max-width: 900px;
-    width: 90%;
-    padding: 20px;
+    width: 100%;
+    padding: 15px;
+    padding-bottom: 100px;
   }
+  
+  /* Navigation simplifiée */
+  .nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 80px;
+    z-index: 90;
+    background: #000;
+    padding: 10px 0;
+  }
+  .nav-btn {
+    flex: 1;
+    background: #333;
+    color: white;
+    border: none;
+    padding: 16px 10px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+  }
+  .nav-btn:active {
+    transform: scale(0.95);
+    background: #444;
+  }
+  
+  /* Calendrier mobile optimisé */
   .calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin: 20px 0;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 25px;
   }
   .day {
-    background: #222;
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: 12px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 18px 12px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    touch-action: manipulation;
   }
-  .day:hover:not(.disabled) {
-    background: #333;
-    transform: translateY(-2px);
+  .day:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+  .day-name {
+    font-size: 0.85em;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #aaa;
+  }
+  .day-date {
+    font-size: 1.3em;
+    font-weight: 700;
   }
   .day.disabled {
-    background: #111;
-    color: #555;
+    background: #0a0a0a;
+    color: #444;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
   }
   .day.selected {
-    background: #0066cc;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
     border-color: #3399ff;
+    transform: scale(1.02);
   }
+  
+  /* Créneaux horaires */
   .slots {
-    margin: 30px 0;
+    margin: 25px 0;
+  }
+  .slots h2 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    text-align: center;
   }
   .slot {
-    background: #222;
-    border: 1px solid #444;
-    border-radius: 6px;
-    padding: 15px;
-    margin: 10px 0;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
     cursor: pointer;
     text-align: center;
-    font-size: 1.1em;
-    transition: all 0.3s;
+    font-size: 1.4em;
+    font-weight: 700;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    position: relative;
   }
-  .slot:hover:not(.disabled) {
-    background: #333;
-    transform: translateX(5px);
+  .slot:active:not(.disabled) {
+    transform: scale(0.98);
   }
   .slot.disabled {
-    background: #111;
+    background: #0a0a0a;
     color: #555;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.5;
   }
   .slot.disabled::after {
-    content: ' - RÉSERVÉ';
+    content: ' RÉSERVÉ';
     color: #ff4444;
-    font-weight: bold;
+    font-size: 0.7em;
+    display: block;
+    margin-top: 5px;
   }
   .slot.selected {
-    background: #0066cc;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
     border-color: #3399ff;
+    transform: scale(1.02);
   }
+  
+  /* Formulaire mobile */
   .form-section {
-    margin: 30px 0;
-    background: #111;
-    padding: 25px;
-    border-radius: 10px;
+    margin: 25px 0;
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 15px;
+  }
+  .form-section h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    text-align: center;
   }
   label {
     display: block;
-    margin: 12px 0 6px;
-    font-size: 1.1em;
+    margin: 18px 0 8px;
+    font-size: 1em;
+    font-weight: 600;
   }
   input, select {
     width: 100%;
-    padding: 10px;
-    font-size: 1em;
-    background: #222;
+    padding: 16px;
+    font-size: 16px;
+    background: #0a0a0a;
     color: white;
-    border: 1px solid #444;
-    border-radius: 6px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    appearance: none;
+    -webkit-appearance: none;
   }
-  button {
-    background: #0066cc;
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #0099ff;
+  }
+  
+  /* Bouton de confirmation */
+  button#confirm-btn {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
     color: white;
     border: none;
-    padding: 14px 30px;
+    padding: 20px;
     font-size: 1.2em;
-    border-radius: 6px;
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 25px;
     width: 100%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    touch-action: manipulation;
   }
-  button:hover {
-    background: #0077ee;
-    transform: scale(1.02);
+  button#confirm-btn:active:not(:disabled) {
+    transform: scale(0.98);
   }
-  button:disabled {
+  button#confirm-btn:disabled {
     background: #555;
-    cursor: not-allowed;
+    opacity: 0.6;
   }
-  .nav-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin: 20px 0;
-  }
-  .nav-btn {
-    background: #333;
-    color: white;
-    border: 1px solid #555;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    width: auto;
-    transition: all 0.3s;
-  }
-  .nav-btn:hover {
-    background: #444;
-  }
+  
+  /* Récapitulatif */
   .recap {
-    margin-top: 30px;
-    padding: 25px;
+    margin: 25px 0;
+    padding: 20px;
     background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-radius: 10px;
+    border-radius: 15px;
     display: none;
-    animation: slideIn 0.5s ease;
+    animation: slideIn 0.4s ease;
   }
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(20px); }
@@ -161,37 +236,59 @@
   }
   .recap h2 {
     margin-top: 0;
-    font-size: 1.8em;
+    font-size: 1.5em;
+    text-align: center;
   }
   .recap-item {
     margin: 15px 0;
-    font-size: 1.2em;
-    padding: 10px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 5px;
+    font-size: 1.05em;
+    padding: 15px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    word-break: break-word;
   }
   .recap-item strong {
-    display: inline-block;
-    min-width: 180px;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    opacity: 0.9;
   }
-  .loading {
-    text-align: center;
-    padding: 20px;
-    color: #0099ff;
-  }
+  
+  /* Messages d'erreur */
   .error {
     background: #ff4444;
     color: white;
     padding: 15px;
-    border-radius: 6px;
-    margin: 20px 0;
+    border-radius: 10px;
+    margin: 15px 0;
     display: none;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: #0099ff;
+    font-size: 1.1em;
+  }
+  
+  /* Cache sections initialement */
+  #slots, #booking-form, #recap {
+    display: none;
+  }
+  
+  /* Smooth scroll pour iOS */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 </style>
 </head>
 <body>
 
-<h1>🎮 Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
+<h1>🎮 Réservation Escape Game<br>Valfréjus</h1>
 
 <div class="container">
   <div class="error" id="error-message"></div>
@@ -203,31 +300,31 @@
 
   <div id="calendar" class="calendar"></div>
 
-  <div class="slots" id="slots" style="display:none;">
-    <h2>Créneaux disponibles</h2>
+  <div class="slots" id="slots">
+    <h2>⏰ Créneaux disponibles</h2>
     <div id="slot-list"></div>
   </div>
 
-  <div class="form-section" id="booking-form" style="display:none;">
-    <h2>Informations de réservation</h2>
+  <div class="form-section" id="booking-form">
+    <h2>📝 Vos informations</h2>
     
-    <label>Nom de famille :</label>
-    <input type="text" id="nom" required>
+    <label>Nom de famille</label>
+    <input type="text" id="nom" required autocomplete="family-name">
 
-    <label>Email :</label>
-    <input type="email" id="email" required placeholder="votre@email.com">
+    <label>Email</label>
+    <input type="email" id="email" required placeholder="votre@email.com" autocomplete="email">
 
-    <label>Nombre de participants :</label>
+    <label>Nombre de participants</label>
     <select id="participants" required>
       <option value="">Choisir...</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
+      <option value="2">2 personnes</option>
+      <option value="3">3 personnes</option>
+      <option value="4">4 personnes</option>
+      <option value="5">5 personnes</option>
+      <option value="6">6 personnes</option>
     </select>
 
-    <label>Niveau estimé de votre groupe de joueurs :</label>
+    <label>Niveau de votre groupe</label>
     <select id="niveau" required>
       <option value="">Choisir...</option>
       <option value="-">Première fois (-)</option>
@@ -236,35 +333,31 @@
       <option value="+++">Bon (+++)</option>
     </select>
 
-    <label>Téléphone :</label>
-    <input type="tel" id="telephone" required>
+    <label>Téléphone</label>
+    <input type="tel" id="telephone" required autocomplete="tel">
 
-    <button id="confirm-btn" onclick="confirmerReservation()">Confirmer la réservation</button>
+    <button id="confirm-btn" onclick="confirmerReservation()">✓ Confirmer la réservation</button>
   </div>
 
   <div class="recap" id="recap">
     <h2>✅ Réservation confirmée !</h2>
     <div id="recap-content"></div>
-    <p style="margin-top: 20px; font-size: 0.95em;">
-      📧 Un email de confirmation a été envoyé à votre adresse.
+    <p style="margin-top: 20px; text-align: center; opacity: 0.95;">
+      📧 Un email de confirmation vous a été envoyé
     </p>
   </div>
 </div>
 
 <script>
-// ────────────────────────────────────────────────
-// CONFIGURATION - REMPLACE PAR TON URL
-// ────────────────────────────────────────────────
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbye6mo-eGKhaF9nDMNsKH0fGFyLG-kS3XtwcKnym1No7pVDn9M2ZTWRk-Nn6o7bdxlFBg/exec';
 
 let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
 let selectedSlot = null;
-let reservedSlots = new Map(); // Map pour stocker les créneaux réservés
+let reservedSlots = new Map();
 
 const allSlots = ['10h', '12h', '14h', '17h', '19h'];
 
-// Obtenir lundi de la semaine courante
 function getMondayOfCurrentWeek() {
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -275,28 +368,26 @@ function getMondayOfCurrentWeek() {
   return monday;
 }
 
-// Navigation
 function prevWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-  selectedDate = null;
-  selectedSlot = null;
-  document.getElementById('slots').style.display = 'none';
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('recap').style.display = 'none';
+  resetSelection();
   renderCalendar();
 }
 
 function nextWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  resetSelection();
+  renderCalendar();
+}
+
+function resetSelection() {
   selectedDate = null;
   selectedSlot = null;
   document.getElementById('slots').style.display = 'none';
   document.getElementById('booking-form').style.display = 'none';
   document.getElementById('recap').style.display = 'none';
-  renderCalendar();
 }
 
-// Affichage calendrier
 function renderCalendar() {
   const calendar = document.getElementById('calendar');
   calendar.innerHTML = '';
@@ -304,9 +395,8 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // Afficher du samedi au vendredi (7 jours)
   const saturday = new Date(currentWeekStart);
-  saturday.setDate(currentWeekStart.getDate() - 2); // Reculer au samedi
+  saturday.setDate(currentWeekStart.getDate() - 2);
 
   for (let i = 0; i < 7; i++) {
     const day = new Date(saturday);
@@ -314,15 +404,20 @@ function renderCalendar() {
 
     const dayEl = document.createElement('div');
     dayEl.className = 'day';
+    
+    const dayName = day.toLocaleDateString('fr-FR', {weekday: 'short'}).toUpperCase();
+    const dayNum = day.getDate();
+    const month = day.toLocaleDateString('fr-FR', {month: 'short'});
+    
     dayEl.innerHTML = `
-      <strong>${day.toLocaleDateString('fr-FR', {weekday: 'long'}).toUpperCase()}</strong><br>
-      ${day.toLocaleDateString('fr-FR', {day: 'numeric', month: 'numeric'})}
+      <div class="day-name">${dayName}</div>
+      <div class="day-date">${dayNum} ${month}</div>
     `;
 
     if (day < today) {
       dayEl.classList.add('disabled');
     } else {
-      dayEl.onclick = () => selectDate(day);
+      dayEl.onclick = () => selectDate(day, dayEl);
     }
 
     calendar.appendChild(dayEl);
@@ -331,19 +426,25 @@ function renderCalendar() {
   loadReservations();
 }
 
-// Sélection date
-function selectDate(date) {
+function selectDate(date, element) {
   selectedDate = date;
   selectedSlot = null;
+  
   document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-  event.target.closest('.day').classList.add('selected');
+  element.classList.add('selected');
+  
   document.getElementById('slots').style.display = 'block';
   document.getElementById('booking-form').style.display = 'none';
   document.getElementById('recap').style.display = 'none';
+  
   renderSlots();
+  
+  // Scroll vers les créneaux
+  setTimeout(() => {
+    document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
-// Affichage créneaux
 function renderSlots() {
   const container = document.getElementById('slot-list');
   container.innerHTML = '';
@@ -352,7 +453,6 @@ function renderSlots() {
   const dateKey = formatDateForSheet(selectedDate);
 
   allSlots.forEach(slot => {
-    // Cacher 10h et 12h pour samedi et dimanche
     if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
       return;
     }
@@ -361,43 +461,42 @@ function renderSlots() {
     slotEl.className = 'slot';
     slotEl.textContent = slot;
 
-    // Vérifier si le créneau est réservé
     const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
     
     if (isReserved) {
       slotEl.classList.add('disabled');
-      slotEl.onclick = null;
     } else {
-      slotEl.onclick = () => selectSlot(slot);
+      slotEl.onclick = () => selectSlot(slot, slotEl);
     }
 
     container.appendChild(slotEl);
   });
 }
 
-// Sélection créneau
-function selectSlot(slot) {
+function selectSlot(slot, element) {
   selectedSlot = slot;
+  
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-  event.target.classList.add('selected');
+  element.classList.add('selected');
+  
   document.getElementById('booking-form').style.display = 'block';
   document.getElementById('recap').style.display = 'none';
+  
+  // Scroll vers le formulaire
+  setTimeout(() => {
+    document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
-// ────────────────────────────────────────────────
-// CHARGER LES CRÉNEAUX RÉSERVÉS
-// ────────────────────────────────────────────────
 async function loadReservations() {
   try {
     const response = await fetch(scriptUrl);
     const data = await response.json();
 
     if (data.status !== 'success' || !data.reservations) {
-      console.warn("Pas de données valides reçues");
       return;
     }
 
-    // Vider et remplir la Map des créneaux réservés
     reservedSlots.clear();
     
     data.reservations.forEach(r => {
@@ -405,17 +504,15 @@ async function loadReservations() {
       reservedSlots.set(key, true);
     });
 
-    // Rafraîchir l'affichage des créneaux si une date est sélectionnée
     if (selectedDate) {
       renderSlots();
     }
 
   } catch (err) {
-    console.error("Erreur lors du chargement des réservations :", err);
+    console.error("Erreur chargement:", err);
   }
 }
 
-// Confirmer réservation
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -424,13 +521,12 @@ async function confirmerReservation() {
   const telephone = document.getElementById('telephone').value.trim();
 
   if (!nom || !email || !participants || !niveau || !telephone) {
-    showError("Veuillez remplir tous les champs.");
+    showError("Veuillez remplir tous les champs");
     return;
   }
 
-  // Validation email simple
   if (!email.includes('@') || !email.includes('.')) {
-    showError("Veuillez entrer un email valide.");
+    showError("Email invalide");
     return;
   }
 
@@ -446,64 +542,46 @@ async function confirmerReservation() {
     telephone: telephone
   };
 
-  // Désactiver le bouton pendant l'envoi
   const btn = document.getElementById('confirm-btn');
   btn.disabled = true;
   btn.textContent = 'Envoi en cours...';
 
   try {
-    const response = await fetch(scriptUrl, {
+    await fetch(scriptUrl, {
       method: 'POST',
       mode: 'no-cors',
       body: JSON.stringify(payload),
       headers: { 'Content-Type': 'text/plain' }
     });
 
-    // Avec no-cors, on ne peut pas lire la réponse directement
-    // On attend un peu puis on recharge les réservations pour vérifier
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Recharger pour vérifier si ça a marché
     await loadReservations();
     
-    // Vérifier si le créneau est maintenant réservé
     const dateKey = formatDateForSheet(selectedDate);
     const isNowReserved = reservedSlots.has(`${dateKey}_${selectedSlot}`);
     
-    const result = isNowReserved ? 
-      { status: 'success' } : 
-      { status: 'error', message: 'La réservation n\'a pas pu être vérifiée' };
-
-    if (result.status === 'success') {
-      // Afficher le récapitulatif
+    if (isNowReserved) {
       afficherRecap(payload);
-      
-      // Masquer le formulaire
       document.getElementById('booking-form').style.display = 'none';
       
-      // Recharger les réservations
-      await loadReservations();
-      
-      // Réinitialiser le formulaire
+      // Reset formulaire
       document.getElementById('nom').value = '';
       document.getElementById('email').value = '';
       document.getElementById('participants').value = '';
       document.getElementById('niveau').value = '';
       document.getElementById('telephone').value = '';
-      
     } else {
-      showError("Erreur : " + (result.message || "Réponse invalide"));
+      showError("Impossible de vérifier la réservation");
     }
   } catch (err) {
-    showError("Erreur de connexion. Veuillez réessayer.");
+    showError("Erreur de connexion");
     console.error(err);
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Confirmer la réservation';
+    btn.textContent = '✓ Confirmer la réservation';
   }
 }
 
-// Afficher le récapitulatif
 function afficherRecap(data) {
   const dateObj = new Date(data.date);
   const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
@@ -515,21 +593,21 @@ function afficherRecap(data) {
 
   const recapContent = document.getElementById('recap-content');
   recapContent.innerHTML = `
-    <div class="recap-item"><strong>👤 Nom :</strong> ${data.nom}</div>
-    <div class="recap-item"><strong>📅 Date :</strong> ${dateFormatee}</div>
-    <div class="recap-item"><strong>🕐 Heure :</strong> ${data.heure}</div>
-    <div class="recap-item"><strong>👥 Participants :</strong> ${data.pers_niveau}</div>
-    <div class="recap-item"><strong>📞 Téléphone :</strong> ${data.telephone}</div>
-    <div class="recap-item"><strong>📧 Email :</strong> ${data.email}</div>
+    <div class="recap-item"><strong>👤 Nom</strong>${data.nom}</div>
+    <div class="recap-item"><strong>📅 Date</strong>${dateFormatee}</div>
+    <div class="recap-item"><strong>🕐 Heure</strong>${data.heure}</div>
+    <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
+    <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
+    <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
   `;
 
   document.getElementById('recap').style.display = 'block';
   
-  // Scroll vers le récapitulatif
-  document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(() => {
+    document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
+  }, 100);
 }
 
-// Afficher une erreur
 function showError(message) {
   const errorDiv = document.getElementById('error-message');
   errorDiv.textContent = message;
@@ -538,9 +616,10 @@ function showError(message) {
   setTimeout(() => {
     errorDiv.style.display = 'none';
   }, 5000);
+  
+  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-// Format date YYYY-MM-DD (pour envoi au script)
 function formatDate(date) {
   const d = new Date(date);
   return d.getFullYear() + '-' +
@@ -548,7 +627,6 @@ function formatDate(date) {
          String(d.getDate()).padStart(2, '0');
 }
 
-// Format date DD/MM/YY (pour comparaison avec le Sheet)
 function formatDateForSheet(date) {
   const d = new Date(date);
   const day = String(d.getDate()).padStart(2, '0');
@@ -557,10 +635,7 @@ function formatDateForSheet(date) {
   return `${day}/${month}/${year}`;
 }
 
-// Initialisation
 renderCalendar();
-
-// Rafraîchir les réservations toutes les 15 secondes
 setInterval(loadReservations, 15000);
 </script>
 </body>
