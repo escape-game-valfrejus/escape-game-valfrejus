@@ -196,29 +196,24 @@ const scriptUrl = 'https://corsproxy.io/?' + encodeURIComponent(
   'https://script.google.com/macros/s/AKfycbyJixvYMKTfPDKQUiwzQ4j3E7o_K0wv6hy6k2qP-CNkoV9T874LBQh2Dh09VV3J_dLxYg/exec'
 );
 
-let currentWeekStart = getMondayOfCurrentWeek(); // lundi actuel
+let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
 let selectedSlot = null;
 
-// Créneaux horaires
 const allSlots = ['10h', '12h', '14h', '17h', '19h'];
 
-// Obtenir le lundi de la semaine courante
+// Obtenir lundi de la semaine courante
 function getMondayOfCurrentWeek() {
   const today = new Date();
-  const dayOfWeek = today.getDay(); // 0=dim, 1=lun, ..., 6=sam
-  
+  const dayOfWeek = today.getDay();
   let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
   const monday = new Date(today);
   monday.setDate(today.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
-  
   return monday;
 }
 
-// ────────────────────────────────────────────────
 // Navigation
-// ────────────────────────────────────────────────
 function prevWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() - 7);
   renderCalendar();
@@ -229,9 +224,7 @@ function nextWeek() {
   renderCalendar();
 }
 
-// ────────────────────────────────────────────────
 // Affichage calendrier
-// ────────────────────────────────────────────────
 function renderCalendar() {
   const calendar = document.getElementById('calendar');
   calendar.innerHTML = '';
@@ -239,7 +232,6 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // -2 = samedi, -1 = dimanche, 0 = lundi, +1 mardi ... +4 vendredi
   for (let i = -2; i <= 4; i++) {
     const day = new Date(currentWeekStart);
     day.setDate(currentWeekStart.getDate() + i);
@@ -261,7 +253,7 @@ function renderCalendar() {
   }
 
   loadReservations();
-  setInterval(loadReservations, 10000);
+  setInterval(loadReservations, 10000); // refresh toutes les 10s
 }
 
 // Sélection date
@@ -288,11 +280,8 @@ function renderSlots() {
     slotEl.className = 'slot';
     slotEl.textContent = slot;
 
-    if (slotEl.dataset.reserved === 'true') {
-      slotEl.classList.add('disabled');
-    } else {
-      slotEl.onclick = () => selectSlot(slot);
-    }
+    // État initial (sera mis à jour par loadReservations)
+    slotEl.onclick = () => selectSlot(slot);
 
     container.appendChild(slotEl);
   });
@@ -308,35 +297,47 @@ function selectSlot(slot) {
   document.getElementById('booking-form').style.display = 'block';
 }
 
-// Charger réservations
+// ────────────────────────────────────────────────
+// CHARGER & BLOQUER LES CRÉNEAUX DÉJÀ RÉSERVÉS (MANUEL + ONLINE)
+// ────────────────────────────────────────────────
 async function loadReservations() {
   try {
     const response = await fetch(scriptUrl);
     const data = await response.json();
 
-    if (data.status === 'success' && data.reservations) {
-      document.querySelectorAll('.slot').forEach(slotEl => {
-        const slotTime = slotEl.textContent;
-        const isReserved = data.reservations.some(r =>
-          r.date === formatDate(selectedDate) && r.heure === slotTime
-        );
-        slotEl.dataset.reserved = isReserved ? 'true' : 'false';
-
-        if (isReserved) {
-          slotEl.classList.add('disabled');
-          slotEl.onclick = null;
-        } else {
-          slotEl.classList.remove('disabled');
-          slotEl.onclick = () => selectSlot(slotTime);
-        }
-      });
+    if (data.status !== 'success' || !data.reservations) {
+      console.warn("Pas de données valides reçues");
+      return;
     }
+
+    const selectedDateStr = formatDate(selectedDate);
+
+    // Pour chaque créneau affiché
+    document.querySelectorAll('.slot').forEach(slotEl => {
+      const slotTime = slotEl.textContent.trim();
+
+      // Chercher si ce créneau est occupé (au moins une des 3 cellules non vide)
+      const isReserved = data.reservations.some(r => {
+        return r.date === selectedDateStr &&
+               r.heure === slotTime &&
+               (r.nom || r.pers_niveau || r.telephone); // une au moins remplie
+      });
+
+      if (isReserved) {
+        slotEl.classList.add('disabled');
+        slotEl.onclick = null; // bloque le clic
+      } else {
+        slotEl.classList.remove('disabled');
+        slotEl.onclick = () => selectSlot(slotTime);
+      }
+    });
+
   } catch (err) {
-    console.error("Erreur chargement:", err);
+    console.error("Erreur lors du chargement des réservations :", err);
   }
 }
 
-// Confirmer
+// Confirmer réservation
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
   const participants = document.getElementById('participants').value;
@@ -371,9 +372,9 @@ async function confirmerReservation() {
     if (result.status === 'success') {
       alert("Réservation enregistrée !");
       document.getElementById('booking-form').style.display = 'none';
-      loadReservations();
+      loadReservations(); // refresh immédiat
     } else {
-      alert("Erreur : " + result.message);
+      alert("Erreur : " + (result.message || "Réponse invalide"));
     }
   } catch (err) {
     alert("Erreur de connexion. Veuillez réessayer.");
@@ -384,8 +385,8 @@ async function confirmerReservation() {
 // Format date YYYY-MM-DD
 function formatDate(date) {
   const d = new Date(date);
-  return d.getFullYear() + '-' + 
-         String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
          String(d.getDate()).padStart(2, '0');
 }
 
