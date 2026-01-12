@@ -506,9 +506,7 @@ function renderSlots() {
   const dateKey = formatDateForSheet(selectedDate);
 
   allSlots.forEach(slot => {
-    if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
-      return;
-    }
+    
 
     const slotEl = document.createElement('div');
     slotEl.className = 'slot';
