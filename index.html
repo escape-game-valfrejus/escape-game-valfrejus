@@ -2,8 +2,10 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Réservation Escape Game Valfréjus</title>
 <style>
+  * { box-sizing: border-box; }
   body {
     margin: 0;
     padding: 0;
@@ -38,9 +40,11 @@
     padding: 12px;
     text-align: center;
     cursor: pointer;
+    transition: all 0.3s;
   }
-  .day:hover {
+  .day:hover:not(.disabled) {
     background: #333;
+    transform: translateY(-2px);
   }
   .day.disabled {
     background: #111;
@@ -64,12 +68,22 @@
     cursor: pointer;
     text-align: center;
     font-size: 1.1em;
+    transition: all 0.3s;
+  }
+  .slot:hover:not(.disabled) {
+    background: #333;
+    transform: translateX(5px);
   }
   .slot.disabled {
     background: #111;
     color: #555;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+  .slot.disabled::after {
+    content: ' - RÉSERVÉ';
+    color: #ff4444;
+    font-weight: bold;
   }
   .slot.selected {
     background: #0066cc;
@@ -105,16 +119,15 @@
     cursor: pointer;
     margin-top: 20px;
     width: 100%;
+    transition: all 0.3s;
   }
   button:hover {
     background: #0077ee;
+    transform: scale(1.02);
   }
-  #recap {
-    margin-top: 30px;
-    padding: 20px;
-    background: #111;
-    border-radius: 10px;
-    display: none;
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
   }
   .nav-buttons {
     display: flex;
@@ -128,17 +141,61 @@
     padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
+    width: auto;
+    transition: all 0.3s;
   }
   .nav-btn:hover {
     background: #444;
+  }
+  .recap {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-radius: 10px;
+    display: none;
+    animation: slideIn 0.5s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .recap h2 {
+    margin-top: 0;
+    font-size: 1.8em;
+  }
+  .recap-item {
+    margin: 15px 0;
+    font-size: 1.2em;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+  }
+  .recap-item strong {
+    display: inline-block;
+    min-width: 180px;
+  }
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: #0099ff;
+  }
+  .error {
+    background: #ff4444;
+    color: white;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 20px 0;
+    display: none;
   }
 </style>
 </head>
 <body>
 
-<h1>Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
+<h1>🎮 Bienvenue sur la page de réservation de l'escape game Valfréjus</h1>
 
 <div class="container">
+  <div class="error" id="error-message"></div>
+  
   <div class="nav-buttons">
     <button class="nav-btn" onclick="prevWeek()">← Semaine précédente</button>
     <button class="nav-btn" onclick="nextWeek()">Semaine suivante →</button>
@@ -146,7 +203,7 @@
 
   <div id="calendar" class="calendar"></div>
 
-  <div class="slots" id="slots">
+  <div class="slots" id="slots" style="display:none;">
     <h2>Créneaux disponibles</h2>
     <div id="slot-list"></div>
   </div>
@@ -156,6 +213,9 @@
     
     <label>Nom de famille :</label>
     <input type="text" id="nom" required>
+
+    <label>Email :</label>
+    <input type="email" id="email" required placeholder="votre@email.com">
 
     <label>Nombre de participants :</label>
     <select id="participants" required>
@@ -179,26 +239,28 @@
     <label>Téléphone :</label>
     <input type="tel" id="telephone" required>
 
-    <button onclick="confirmerReservation()">Confirmer la réservation</button>
+    <button id="confirm-btn" onclick="confirmerReservation()">Confirmer la réservation</button>
   </div>
 
-  <div id="recap">
-    <h2>Récapitulatif</h2>
-    <p id="recap-content"></p>
+  <div class="recap" id="recap">
+    <h2>✅ Réservation confirmée !</h2>
+    <div id="recap-content"></div>
+    <p style="margin-top: 20px; font-size: 0.95em;">
+      📧 Un email de confirmation a été envoyé à votre adresse.
+    </p>
   </div>
 </div>
 
 <script>
 // ────────────────────────────────────────────────
-// CONFIGURATION
+// CONFIGURATION - REMPLACE PAR TON URL
 // ────────────────────────────────────────────────
-const scriptUrl = 'https://corsproxy.io/?' + encodeURIComponent(
-  'https://script.google.com/macros/s/AKfycbyJixvYMKTfPDKQUiwzQ4j3E7o_K0wv6hy6k2qP-CNkoV9T874LBQh2Dh09VV3J_dLxYg/exec'
-);
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbwa24_VN_hqWpxaiEOkbuYbzAUg09y05qJywl37BtgCs5KlIAhjmIv18Q46eEorJbcQtw/exec';
 
 let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
 let selectedSlot = null;
+let reservedSlots = new Map(); // Map pour stocker les créneaux réservés
 
 const allSlots = ['10h', '12h', '14h', '17h', '19h'];
 
@@ -216,11 +278,21 @@ function getMondayOfCurrentWeek() {
 // Navigation
 function prevWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  selectedDate = null;
+  selectedSlot = null;
+  document.getElementById('slots').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
   renderCalendar();
 }
 
 function nextWeek() {
   currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  selectedDate = null;
+  selectedSlot = null;
+  document.getElementById('slots').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
   renderCalendar();
 }
 
@@ -232,9 +304,13 @@ function renderCalendar() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  for (let i = -2; i <= 4; i++) {
-    const day = new Date(currentWeekStart);
-    day.setDate(currentWeekStart.getDate() + i);
+  // Afficher du samedi au vendredi (7 jours)
+  const saturday = new Date(currentWeekStart);
+  saturday.setDate(currentWeekStart.getDate() - 2); // Reculer au samedi
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(saturday);
+    day.setDate(saturday.getDate() + i);
 
     const dayEl = document.createElement('div');
     dayEl.className = 'day';
@@ -253,14 +329,17 @@ function renderCalendar() {
   }
 
   loadReservations();
-  setInterval(loadReservations, 10000); // refresh toutes les 10s
 }
 
 // Sélection date
 function selectDate(date) {
   selectedDate = date;
+  selectedSlot = null;
   document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
   event.target.closest('.day').classList.add('selected');
+  document.getElementById('slots').style.display = 'block';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
   renderSlots();
 }
 
@@ -270,8 +349,10 @@ function renderSlots() {
   container.innerHTML = '';
 
   const dayOfWeek = selectedDate.getDay();
+  const dateKey = formatDateForSheet(selectedDate);
 
   allSlots.forEach(slot => {
+    // Cacher 10h et 12h pour samedi et dimanche
     if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
       return;
     }
@@ -280,13 +361,18 @@ function renderSlots() {
     slotEl.className = 'slot';
     slotEl.textContent = slot;
 
-    // État initial (sera mis à jour par loadReservations)
-    slotEl.onclick = () => selectSlot(slot);
+    // Vérifier si le créneau est réservé
+    const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
+    
+    if (isReserved) {
+      slotEl.classList.add('disabled');
+      slotEl.onclick = null;
+    } else {
+      slotEl.onclick = () => selectSlot(slot);
+    }
 
     container.appendChild(slotEl);
   });
-
-  document.getElementById('booking-form').style.display = 'none';
 }
 
 // Sélection créneau
@@ -295,10 +381,11 @@ function selectSlot(slot) {
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
   event.target.classList.add('selected');
   document.getElementById('booking-form').style.display = 'block';
+  document.getElementById('recap').style.display = 'none';
 }
 
 // ────────────────────────────────────────────────
-// CHARGER & BLOQUER LES CRÉNEAUX DÉJÀ RÉSERVÉS (MANUEL + ONLINE)
+// CHARGER LES CRÉNEAUX RÉSERVÉS
 // ────────────────────────────────────────────────
 async function loadReservations() {
   try {
@@ -310,27 +397,18 @@ async function loadReservations() {
       return;
     }
 
-    const selectedDateStr = formatDate(selectedDate);
-
-    // Pour chaque créneau affiché
-    document.querySelectorAll('.slot').forEach(slotEl => {
-      const slotTime = slotEl.textContent.trim();
-
-      // Chercher si ce créneau est occupé (au moins une des 3 cellules non vide)
-      const isReserved = data.reservations.some(r => {
-        return r.date === selectedDateStr &&
-               r.heure === slotTime &&
-               (r.nom || r.pers_niveau || r.telephone); // une au moins remplie
-      });
-
-      if (isReserved) {
-        slotEl.classList.add('disabled');
-        slotEl.onclick = null; // bloque le clic
-      } else {
-        slotEl.classList.remove('disabled');
-        slotEl.onclick = () => selectSlot(slotTime);
-      }
+    // Vider et remplir la Map des créneaux réservés
+    reservedSlots.clear();
+    
+    data.reservations.forEach(r => {
+      const key = `${r.date}_${r.heure}`;
+      reservedSlots.set(key, true);
     });
+
+    // Rafraîchir l'affichage des créneaux si une date est sélectionnée
+    if (selectedDate) {
+      renderSlots();
+    }
 
   } catch (err) {
     console.error("Erreur lors du chargement des réservations :", err);
@@ -340,12 +418,19 @@ async function loadReservations() {
 // Confirmer réservation
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
+  const email = document.getElementById('email').value.trim();
   const participants = document.getElementById('participants').value;
   const niveau = document.getElementById('niveau').value;
   const telephone = document.getElementById('telephone').value.trim();
 
-  if (!nom || !participants || !niveau || !telephone) {
-    alert("Veuillez remplir tous les champs.");
+  if (!nom || !email || !participants || !niveau || !telephone) {
+    showError("Veuillez remplir tous les champs.");
+    return;
+  }
+
+  // Validation email simple
+  if (!email.includes('@') || !email.includes('.')) {
+    showError("Veuillez entrer un email valide.");
     return;
   }
 
@@ -356,9 +441,15 @@ async function confirmerReservation() {
     date: formatDate(selectedDate),
     heure: selectedSlot,
     nom: nom,
+    email: email,
     pers_niveau: persAvecNiveau,
     telephone: telephone
   };
+
+  // Désactiver le bouton pendant l'envoi
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
 
   try {
     const response = await fetch(scriptUrl, {
@@ -370,19 +461,72 @@ async function confirmerReservation() {
     const result = await response.json();
 
     if (result.status === 'success') {
-      alert("Réservation enregistrée !");
+      // Afficher le récapitulatif
+      afficherRecap(payload);
+      
+      // Masquer le formulaire
       document.getElementById('booking-form').style.display = 'none';
-      loadReservations(); // refresh immédiat
+      
+      // Recharger les réservations
+      await loadReservations();
+      
+      // Réinitialiser le formulaire
+      document.getElementById('nom').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('participants').value = '';
+      document.getElementById('niveau').value = '';
+      document.getElementById('telephone').value = '';
+      
     } else {
-      alert("Erreur : " + (result.message || "Réponse invalide"));
+      showError("Erreur : " + (result.message || "Réponse invalide"));
     }
   } catch (err) {
-    alert("Erreur de connexion. Veuillez réessayer.");
+    showError("Erreur de connexion. Veuillez réessayer.");
     console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Confirmer la réservation';
   }
 }
 
-// Format date YYYY-MM-DD
+// Afficher le récapitulatif
+function afficherRecap(data) {
+  const dateObj = new Date(data.date);
+  const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  const recapContent = document.getElementById('recap-content');
+  recapContent.innerHTML = `
+    <div class="recap-item"><strong>👤 Nom :</strong> ${data.nom}</div>
+    <div class="recap-item"><strong>📅 Date :</strong> ${dateFormatee}</div>
+    <div class="recap-item"><strong>🕐 Heure :</strong> ${data.heure}</div>
+    <div class="recap-item"><strong>👥 Participants :</strong> ${data.pers_niveau}</div>
+    <div class="recap-item"><strong>📞 Téléphone :</strong> ${data.telephone}</div>
+    <div class="recap-item"><strong>📧 Email :</strong> ${data.email}</div>
+  `;
+
+  document.getElementById('recap').style.display = 'block';
+  
+  // Scroll vers le récapitulatif
+  document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Afficher une erreur
+function showError(message) {
+  const errorDiv = document.getElementById('error-message');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 5000);
+}
+
+// Format date YYYY-MM-DD (pour envoi au script)
 function formatDate(date) {
   const d = new Date(date);
   return d.getFullYear() + '-' +
@@ -390,8 +534,20 @@ function formatDate(date) {
          String(d.getDate()).padStart(2, '0');
 }
 
+// Format date DD/MM/YY (pour comparaison avec le Sheet)
+function formatDateForSheet(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(2);
+  return `${day}/${month}/${year}`;
+}
+
 // Initialisation
 renderCalendar();
+
+// Rafraîchir les réservations toutes les 15 secondes
+setInterval(loadReservations, 15000);
 </script>
 </body>
 </html>
