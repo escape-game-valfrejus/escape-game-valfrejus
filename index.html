@@ -221,6 +221,12 @@
     margin-top: 5px;
     opacity: 0.9;
   }
+  .price-display .payment-info {
+    font-size: 0.85em;
+    margin-top: 10px;
+    opacity: 0.9;
+    font-style: italic;
+  }
   
   /* Bouton de confirmation */
   button#confirm-btn {
@@ -275,6 +281,12 @@
     display: block;
     margin-bottom: 5px;
     font-size: 0.9em;
+    opacity: 0.9;
+  }
+  .recap-item small {
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
     opacity: 0.9;
   }
   
@@ -352,6 +364,7 @@
       <div class="price-label">Prix total</div>
       <div id="total-price" class="price-amount"></div>
       <div id="price-detail" class="price-detail"></div>
+      <div class="payment-info">Paiement sur place (CB, espèces, chèques)</div>
     </div>
 
     <label>Niveau de votre groupe</label>
@@ -379,7 +392,7 @@
 </div>
 
 <script>
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbwxAxcsLvFFroAbUH8UT_BwvvQuf0G5Aa_AJkLrwHmC2f13lC2b2Y0vvKJotxPVZnJRjQ/exec';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbzLQdMu2jhBa6652iMhOt2dmK-sIpft6v4VreOzuYjOZhqFTifwklGJVlrAOQ-FII6UTQ/exec';
 
 let currentWeekStart = getMondayOfCurrentWeek();
 let selectedDate = null;
@@ -506,9 +519,8 @@ function renderSlots() {
   const dateKey = formatDateForSheet(selectedDate);
 
   allSlots.forEach(slot => {
-    // VERROUILLAGE 10h et 12h samedi (6) et dimanche (0)
     if ((dayOfWeek === 0 || dayOfWeek === 6) && (slot === '10h' || slot === '12h')) {
-      return;  // ← c'est cette ligne qui masque les créneaux matin week-end
+      return;
     }
 
     const slotEl = document.createElement('div');
@@ -656,7 +668,7 @@ function afficherRecap(data) {
     <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
     <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
     <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
-    <div class="recap-item"><strong>💰 Prix total</strong>${data.prix_total}€ (${data.prix_par_personne}€/pers)</div>
+    <div class="recap-item"><strong>💰 Prix total</strong>${data.prix_total}€ (${data.prix_par_personne}€/pers)<br><small>Paiement sur place (CB, espèces, chèques)</small></div>
   `;
 
   document.getElementById('recap').style.display = 'block';
