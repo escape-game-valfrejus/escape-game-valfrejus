@@ -427,12 +427,26 @@ function updatePrice() {
 
 function getMondayOfCurrentWeek() {
   const today = new Date();
-  const dayOfWeek = today.getDay();
-  let diff = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
+  const dayOfWeek = today.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+  
+  // Calculer le samedi de la semaine en cours
+  // Si on est dimanche (0), on veut le samedi d'hier (-1)
+  // Si on est lundi (1), on veut le samedi d'il y a 2 jours (-2)
+  // Si on est samedi (6), on veut aujourd'hui (0)
+  let diff;
+  if (dayOfWeek === 0) {
+    diff = -1; // dimanche -> samedi d'hier
+  } else {
+    diff = 6 - dayOfWeek; // jours jusqu'au prochain samedi
+    if (diff > 0) {
+      diff = diff - 7; // on veut le samedi précédent, pas le suivant
+    }
+  }
+  
+  const saturday = new Date(today);
+  saturday.setDate(today.getDate() + diff);
+  saturday.setHours(0, 0, 0, 0);
+  return saturday;
 }
 
 function prevWeek() {
