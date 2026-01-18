@@ -327,9 +327,10 @@
 <h1>🎮 Réservation Escape Game<br>Valfréjus</h1>
 
 <div class="container">
+  <div class="loading" id="loading">Chargement du planning...</div>
   <div class="error" id="error-message"></div>
   
-  <div class="nav-buttons">
+  <div class="nav-buttons" style="display: none;" id="nav-buttons">
     <button class="nav-btn" onclick="prevWeek()">← Semaine précédente</button>
     <button class="nav-btn" onclick="nextWeek()">Semaine suivante →</button>
   </div>
@@ -394,7 +395,7 @@
 <script>
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbyGM3iyAU1noFzu6qTHIlQOPPduJ5rMSMZ6FjKzw_PenWXocflTbqKThoMWyVyjs6WcEA/exec';
 
-let currentWeekStart = getMondayOfCurrentWeek();
+let currentWeekStart = null;
 let selectedDate = null;
 let selectedSlot = null;
 let reservedSlots = new Map();
@@ -425,35 +426,18 @@ function updatePrice() {
   }
 }
 
-function getMondayOfCurrentWeek() {
-  const today = new Date();
-  const dayOfWeek = today.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+function parseDateFromSheet(dateStr) {
+  // Format attendu: "17/01/25" (dd/mm/yy)
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
   
-  // La semaine va du samedi au vendredi
-  // On calcule le samedi de la semaine en cours
+  const day = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1;
+  const year = 2000 + parseInt(parts[2]);
   
-  let diff;
-  if (dayOfWeek === 6) {
-    // Si on est samedi, c'est aujourd'hui
-    diff = 0;
-  } else if (dayOfWeek === 0) {
-    // Si on est dimanche, le samedi c'était hier
-    diff = -1;
-  } else {
-    // Si on est lundi (1) à vendredi (5), on remonte au samedi précédent
-    diff = -(dayOfWeek + 1);
-  }
-  
-  const saturday = new Date(today);
-  saturday.setDate(today.getDate() + diff);
-  saturday.setHours(0, 0, 0, 0);
-  return saturday;
-}
-  
-  const saturday = new Date(today);
-  saturday.setDate(today.getDate() + diff);
-  saturday.setHours(0, 0, 0, 0);
-  return saturday;
+  const date = new Date(year, month, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 function prevWeek() {
@@ -477,6 +461,8 @@ function resetSelection() {
 }
 
 function renderCalendar() {
+  if (!currentWeekStart) return;
+  
   const calendar = document.getElementById('calendar');
   calendar.innerHTML = '';
 
@@ -484,7 +470,6 @@ function renderCalendar() {
   today.setHours(0,0,0,0);
 
   const saturday = new Date(currentWeekStart);
-  saturday.setDate(currentWeekStart.getDate() - 2);
 
   for (let i = 0; i < 7; i++) {
     const day = new Date(saturday);
@@ -510,8 +495,6 @@ function renderCalendar() {
 
     calendar.appendChild(dayEl);
   }
-
-  loadReservations();
 }
 
 function selectDate(date, element) {
@@ -580,7 +563,47 @@ async function loadReservations() {
     const data = await response.json();
 
     if (data.status !== 'success' || !data.reservations) {
+      showError("Impossible de charger le planning");
       return;
+    }
+
+    // Récupérer toutes les dates uniques des réservations
+    const allDates = new Set();
+    
+    data.reservations.forEach(r => {
+      if (r.date) {
+        allDates.add(r.date);
+      }
+    });
+
+    // Si on a des dates, trouver la plus petite (le samedi)
+    if (allDates.size > 0) {
+      const dates = Array.from(allDates).map(dateStr => {
+        return { str: dateStr, obj: parseDateFromSheet(dateStr) };
+      }).filter(d => d.obj !== null);
+      
+      if (dates.length > 0) {
+        // Trier par date croissante et prendre la première = samedi
+        dates.sort((a, b) => a.obj - b.obj);
+        currentWeekStart = dates[0].obj;
+      }
+    }
+
+    // Si toujours pas de date (planning vide), calculer le samedi de cette semaine
+    if (!currentWeekStart) {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      let diff;
+      if (dayOfWeek === 6) {
+        diff = 0;
+      } else if (dayOfWeek === 0) {
+        diff = -1;
+      } else {
+        diff = -(dayOfWeek + 1);
+      }
+      currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() + diff);
+      currentWeekStart.setHours(0, 0, 0, 0);
     }
 
     reservedSlots.clear();
@@ -590,12 +613,19 @@ async function loadReservations() {
       reservedSlots.set(key, true);
     });
 
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('nav-buttons').style.display = 'flex';
+    
+    renderCalendar();
+
     if (selectedDate) {
       renderSlots();
     }
 
   } catch (err) {
     console.error("Erreur chargement:", err);
+    document.getElementById('loading').style.display = 'none';
+    showError("Erreur de connexion au serveur");
   }
 }
 
@@ -726,7 +756,8 @@ function formatDateForSheet(date) {
   return `${day}/${month}/${year}`;
 }
 
-renderCalendar();
+// Initialisation
+loadReservations();
 setInterval(loadReservations, 15000);
 </script>
 </body>
