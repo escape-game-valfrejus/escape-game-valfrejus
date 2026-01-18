@@ -646,6 +646,34 @@ async function confirmerReservation() {
     return;
   }
 
+  const btn = document.getElementById('confirm-btn');
+  btn.disabled = true;
+  btn.textContent = 'Vérification...';
+
+  // VÉRIFICATION FINALE : Le créneau est-il toujours disponible ?
+  try {
+    await loadReservations();
+    
+    const dateKey = formatDateForSheet(selectedDate);
+    const isNowReserved = reservedSlots.has(`${dateKey}_${selectedSlot}`);
+    
+    if (isNowReserved) {
+      showError("⚠️ Désolé, ce créneau vient d'être réservé par quelqu'un d'autre. Veuillez choisir un autre créneau.");
+      btn.disabled = false;
+      btn.textContent = '✓ Confirmer la réservation';
+      
+      // Rafraîchir l'affichage des créneaux
+      renderSlots();
+      return;
+    }
+  } catch (err) {
+    showError("Erreur de vérification. Veuillez réessayer.");
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmer la réservation';
+    return;
+  }
+
+  // Le créneau est libre, on continue avec la réservation
   const niveauSymboles = { '-': '-', '+': '+', '++': '++', '+++': '+++' };
   const persAvecNiveau = `${participants} ${niveauSymboles[niveau]}`;
   
@@ -662,8 +690,6 @@ async function confirmerReservation() {
     prix_total: price.total
   };
 
-  const btn = document.getElementById('confirm-btn');
-  btn.disabled = true;
   btn.textContent = 'Envoi en cours...';
 
   try {
