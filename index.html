@@ -429,19 +429,26 @@ function getMondayOfCurrentWeek() {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
   
-  // Calculer le samedi de la semaine en cours
-  // Si on est dimanche (0), on veut le samedi d'hier (-1)
-  // Si on est lundi (1), on veut le samedi d'il y a 2 jours (-2)
-  // Si on est samedi (6), on veut aujourd'hui (0)
+  // La semaine va du samedi au vendredi
+  // On calcule le samedi de la semaine en cours
+  
   let diff;
-  if (dayOfWeek === 0) {
-    diff = -1; // dimanche -> samedi d'hier
+  if (dayOfWeek === 6) {
+    // Si on est samedi, c'est aujourd'hui
+    diff = 0;
+  } else if (dayOfWeek === 0) {
+    // Si on est dimanche, le samedi c'était hier
+    diff = -1;
   } else {
-    diff = 6 - dayOfWeek; // jours jusqu'au prochain samedi
-    if (diff > 0) {
-      diff = diff - 7; // on veut le samedi précédent, pas le suivant
-    }
+    // Si on est lundi (1) à vendredi (5), on remonte au samedi précédent
+    diff = -(dayOfWeek + 1);
   }
+  
+  const saturday = new Date(today);
+  saturday.setDate(today.getDate() + diff);
+  saturday.setHours(0, 0, 0, 0);
+  return saturday;
+}
   
   const saturday = new Date(today);
   saturday.setDate(today.getDate() + diff);
