@@ -1,519 +1,43 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<title>Réservation Escape Game Valfréjus</title>
-<style>
-  * { 
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-  }
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-    background: #000;
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    touch-action: pan-y;
-  }
-  h1 {
-    margin: 0;
-    padding: 20px 15px;
-    font-size: 1.4em;
-    text-align: center;
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .container {
-    width: 100%;
-    padding: 15px;
-    padding-bottom: 100px;
-  }
-  
-  /* Navigation simplifiée */
-  .nav-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    position: sticky;
-    top: 80px;
-    z-index: 90;
-    background: #000;
-    padding: 10px 0;
-  }
-  .nav-btn {
-    flex: 1;
-    background: #333;
-    color: white;
-    border: none;
-    padding: 16px 10px;
-    border-radius: 10px;
-    font-size: 1em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    touch-action: manipulation;
-  }
-  .nav-btn:active {
-    transform: scale(0.95);
-    background: #444;
-  }
-  
-  /* Calendrier mobile optimisé */
-  .calendar {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 25px;
-  }
-  .day {
-    background: #1a1a1a;
-    border: 2px solid #333;
-    border-radius: 12px;
-    padding: 18px 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 90px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    touch-action: manipulation;
-  }
-  .day:active:not(.disabled) {
-    transform: scale(0.95);
-  }
-  .day-name {
-    font-size: 0.85em;
-    font-weight: 700;
-    margin-bottom: 6px;
-    color: #aaa;
-  }
-  .day-date {
-    font-size: 1.3em;
-    font-weight: 700;
-  }
-  .day.disabled {
-    background: #0a0a0a;
-    color: #444;
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-  .day.selected {
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-color: #3399ff;
-    transform: scale(1.02);
-  }
-  
-  /* Créneaux horaires */
-  .slots {
-    margin: 25px 0;
-  }
-  .slots h2 {
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  .slot {
-    background: #1a1a1a;
-    border: 2px solid #333;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 12px 0;
-    cursor: pointer;
-    text-align: center;
-    font-size: 1.4em;
-    font-weight: 700;
-    transition: all 0.2s;
-    touch-action: manipulation;
-    position: relative;
-  }
-  .slot:active:not(.disabled) {
-    transform: scale(0.98);
-  }
-  .slot.disabled {
-    background: #0a0a0a;
-    color: #555;
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-  .slot.disabled::after {
-    content: ' RÉSERVÉ';
-    color: #ff4444;
-    font-size: 0.7em;
-    display: block;
-    margin-top: 5px;
-  }
-  .slot.selected {
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-color: #3399ff;
-    transform: scale(1.02);
-  }
-  
-  /* Formulaire mobile */
-  .form-section {
-    margin: 25px 0;
-    background: #1a1a1a;
-    padding: 20px;
-    border-radius: 15px;
-  }
-  .form-section h2 {
-    margin-top: 0;
-    font-size: 1.3em;
-    text-align: center;
-  }
-  label {
-    display: block;
-    margin: 18px 0 8px;
-    font-size: 1em;
-    font-weight: 600;
-  }
-  input, select {
-    width: 100%;
-    padding: 16px;
-    font-size: 16px;
-    background: #0a0a0a;
-    color: white;
-    border: 2px solid #333;
-    border-radius: 10px;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 16px center;
-    padding-right: 40px;
-  }
-  input:focus, select:focus {
-    outline: none;
-    border-color: #0099ff;
-  }
-  
-  /* Encadré prix */
-  .price-display {
-    margin-top: 15px;
-    padding: 18px;
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-radius: 12px;
-    text-align: center;
-    display: none;
-  }
-  .price-display .price-label {
-    font-size: 0.9em;
-    margin-bottom: 8px;
-    opacity: 0.95;
-  }
-  .price-display .price-amount {
-    font-size: 2em;
-    font-weight: 700;
-  }
-  .price-display .price-detail {
-    font-size: 0.95em;
-    margin-top: 5px;
-    opacity: 0.9;
-  }
-  .price-display .payment-info {
-    font-size: 0.85em;
-    margin-top: 10px;
-    opacity: 0.9;
-    font-style: italic;
-  }
-  
-  /* Bouton de confirmation */
-  button#confirm-btn {
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    color: white;
-    border: none;
-    padding: 20px;
-    font-size: 1.2em;
-    font-weight: 700;
-    border-radius: 12px;
-    cursor: pointer;
-    margin-top: 25px;
-    width: 100%;
-    transition: all 0.2s;
-    touch-action: manipulation;
-  }
-  button#confirm-btn:active:not(:disabled) {
-    transform: scale(0.98);
-  }
-  button#confirm-btn:disabled {
-    background: #555;
-    opacity: 0.6;
-  }
-  
-  /* Récapitulatif */
-  .recap {
-    margin: 25px 0;
-    padding: 20px;
-    background: linear-gradient(135deg, #0066cc, #0099ff);
-    border-radius: 15px;
-    display: none;
-    animation: slideIn 0.4s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .recap h2 {
-    margin-top: 0;
-    font-size: 1.5em;
-    text-align: center;
-  }
-  .recap-item {
-    margin: 15px 0;
-    font-size: 1.05em;
-    padding: 15px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-    word-break: break-word;
-  }
-  .recap-item strong {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-    opacity: 0.9;
-  }
-  .recap-item small {
-    display: block;
-    margin-top: 5px;
-    font-style: italic;
-    opacity: 0.9;
-  }
-  
-  /* Messages d'erreur */
-  .error {
-    background: #ff4444;
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 15px 0;
-    display: none;
-    font-weight: 600;
-    text-align: center;
-  }
-  
-  /* Loading */
-  .loading {
-    text-align: center;
-    padding: 20px;
-    color: #0099ff;
-    font-size: 1.1em;
-  }
-  
-  /* Cache sections initialement */
-  #slots, #booking-form, #recap {
-    display: none;
-  }
-  
-  /* Smooth scroll pour iOS */
-  html {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-</style>
-</head>
-<body>
+// Ajoute cette nouvelle fonction après la fonction formatDateForSheet()
 
-<h1>🎮 Réservation Escape Game<br>Valfréjus</h1>
-
-<div class="container">
-  <div class="loading" id="loading">Chargement du planning...</div>
-  <div class="error" id="error-message"></div>
-  
-  <div class="nav-buttons" style="display: none;" id="nav-buttons">
-    <button class="nav-btn" onclick="prevWeek()">← Semaine précédente</button>
-    <button class="nav-btn" onclick="nextWeek()">Semaine suivante →</button>
-  </div>
-
-  <div id="calendar" class="calendar"></div>
-
-  <div class="slots" id="slots">
-    <h2>⏰ Créneaux disponibles</h2>
-    <div id="slot-list"></div>
-  </div>
-
-  <div class="form-section" id="booking-form">
-    <h2>📝 Vos informations</h2>
-    
-    <label>Nom de famille</label>
-    <input type="text" id="nom" required autocomplete="family-name">
-
-    <label>Email</label>
-    <input type="email" id="email" required placeholder="votre@email.com" autocomplete="email">
-
-    <label>Nombre de participants</label>
-    <select id="participants" required onchange="updatePrice()">
-      <option value="">Choisir...</option>
-      <option value="2">2 personnes - 22€/pers (44€ total)</option>
-      <option value="3">3 personnes - 20€/pers (60€ total)</option>
-      <option value="4">4 personnes - 20€/pers (80€ total)</option>
-      <option value="5">5 personnes - 18€/pers (90€ total)</option>
-      <option value="6">6 personnes - 18€/pers (108€ total)</option>
-    </select>
-    
-    <div id="price-display" class="price-display">
-      <div class="price-label">Prix total</div>
-      <div id="total-price" class="price-amount"></div>
-      <div id="price-detail" class="price-detail"></div>
-      <div class="payment-info">Paiement sur place (CB, espèces, chèques)</div>
-    </div>
-
-    <label>Niveau de votre groupe</label>
-    <select id="niveau" required>
-      <option value="">Choisir...</option>
-      <option value="-">Première fois (-)</option>
-      <option value="+">Débutant (+)</option>
-      <option value="++">Intermédiaire (++)</option>
-      <option value="+++">Bon (+++)</option>
-    </select>
-
-    <label>Téléphone</label>
-    <input type="tel" id="telephone" required autocomplete="tel">
-
-    <button id="confirm-btn" onclick="confirmerReservation()">✓ Confirmer la réservation</button>
-  </div>
-
-  <div class="recap" id="recap">
-    <h2>✅ Réservation confirmée !</h2>
-    <div id="recap-content"></div>
-    <p style="margin-top: 20px; text-align: center; opacity: 0.95;">
-      📧 Un email de confirmation vous a été envoyé
-    </p>
-  </div>
-</div>
-
-<script>
-const scriptUrl = 'https://script.google.com/macros/s/AKfycbyGM3iyAU1noFzu6qTHIlQOPPduJ5rMSMZ6FjKzw_PenWXocflTbqKThoMWyVyjs6WcEA/exec';
-
-let currentWeekStart = null;
-let selectedDate = null;
-let selectedSlot = null;
-let reservedSlots = new Map();
-
-const allSlots = ['10h', '12h', '14h', '17h', '19h'];
-
-const priceTable = {
-  2: { perPerson: 22, total: 44 },
-  3: { perPerson: 20, total: 60 },
-  4: { perPerson: 20, total: 80 },
-  5: { perPerson: 18, total: 90 },
-  6: { perPerson: 18, total: 108 }
-};
-
-function updatePrice() {
-  const participants = document.getElementById('participants').value;
-  const priceDisplay = document.getElementById('price-display');
-  const totalPrice = document.getElementById('total-price');
-  const priceDetail = document.getElementById('price-detail');
-  
-  if (participants && priceTable[participants]) {
-    const price = priceTable[participants];
-    priceDisplay.style.display = 'block';
-    totalPrice.textContent = price.total + '€';
-    priceDetail.textContent = `${price.perPerson}€ par personne`;
-  } else {
-    priceDisplay.style.display = 'none';
-  }
-}
-
-function parseDateFromSheet(dateStr) {
-  // Format attendu: "17/01/25" (dd/mm/yy)
-  const parts = dateStr.split('/');
-  if (parts.length !== 3) return null;
-  
-  const day = parseInt(parts[0]);
-  const month = parseInt(parts[1]) - 1;
-  const year = 2000 + parseInt(parts[2]);
-  
-  const date = new Date(year, month, day);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
-
-function prevWeek() {
-  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-  resetSelection();
-  renderCalendar();
-}
-
-function nextWeek() {
-  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-  resetSelection();
-  renderCalendar();
-}
-
-function resetSelection() {
-  selectedDate = null;
-  selectedSlot = null;
-  document.getElementById('slots').style.display = 'none';
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('recap').style.display = 'none';
-}
-
-function renderCalendar() {
-  if (!currentWeekStart) return;
-  
-  const calendar = document.getElementById('calendar');
-  calendar.innerHTML = '';
-
+function isSlotAvailableByTime(slot, selectedDate) {
+  const now = new Date();
   const today = new Date();
-  today.setHours(0,0,0,0);
-
-  const saturday = new Date(currentWeekStart);
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(saturday);
-    day.setDate(saturday.getDate() + i);
-
-    const dayEl = document.createElement('div');
-    dayEl.className = 'day';
-    
-    const dayName = day.toLocaleDateString('fr-FR', {weekday: 'short'}).toUpperCase();
-    const dayNum = day.getDate();
-    const month = day.toLocaleDateString('fr-FR', {month: 'short'});
-    
-    dayEl.innerHTML = `
-      <div class="day-name">${dayName}</div>
-      <div class="day-date">${dayNum} ${month}</div>
-    `;
-
-    if (day < today) {
-      dayEl.classList.add('disabled');
-    } else {
-      dayEl.onclick = () => selectDate(day, dayEl);
-    }
-
-    calendar.appendChild(dayEl);
+  today.setHours(0, 0, 0, 0);
+  
+  const compareDate = new Date(selectedDate);
+  compareDate.setHours(0, 0, 0, 0);
+  
+  // Si ce n'est pas aujourd'hui, le créneau est disponible (pas de restriction temporelle)
+  if (compareDate.getTime() !== today.getTime()) {
+    return true;
   }
+  
+  // C'est aujourd'hui, on vérifie l'heure avec le délai de 30 min
+  const slotTimes = {
+    '10h': 10,
+    '12h': 12,
+    '14h': 14,
+    '17h': 17,
+    '19h': 19
+  };
+  
+  const slotHour = slotTimes[slot];
+  if (!slotHour) return true;
+  
+  // Créer l'heure du créneau aujourd'hui
+  const slotTime = new Date();
+  slotTime.setHours(slotHour, 0, 0, 0);
+  
+  // Soustraire 30 minutes pour obtenir l'heure limite de réservation
+  const blockTime = new Date(slotTime.getTime() - 30 * 60 * 1000);
+  
+  // Si l'heure actuelle est >= à l'heure de blocage, le créneau n'est plus disponible
+  return now < blockTime;
 }
 
-function selectDate(date, element) {
-  selectedDate = date;
-  selectedSlot = null;
-  
-  document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
-  element.classList.add('selected');
-  
-  document.getElementById('slots').style.display = 'block';
-  document.getElementById('booking-form').style.display = 'none';
-  document.getElementById('recap').style.display = 'none';
-  
-  renderSlots();
-  
-  setTimeout(() => {
-    document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
-}
+
+// REMPLACE la fonction renderSlots() par celle-ci :
 
 function renderSlots() {
   const container = document.getElementById('slot-list');
@@ -532,8 +56,9 @@ function renderSlots() {
     slotEl.textContent = slot;
 
     const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
+    const isAvailableByTime = isSlotAvailableByTime(slot, selectedDate);
     
-    if (isReserved) {
+    if (isReserved || !isAvailableByTime) {
       slotEl.classList.add('disabled');
     } else {
       slotEl.onclick = () => selectSlot(slot, slotEl);
@@ -543,91 +68,8 @@ function renderSlots() {
   });
 }
 
-function selectSlot(slot, element) {
-  selectedSlot = slot;
-  
-  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-  element.classList.add('selected');
-  
-  document.getElementById('booking-form').style.display = 'block';
-  document.getElementById('recap').style.display = 'none';
-  
-  setTimeout(() => {
-    document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 100);
-}
 
-async function loadReservations() {
-  try {
-    const response = await fetch(scriptUrl);
-    const data = await response.json();
-
-    if (data.status !== 'success' || !data.reservations) {
-      showError("Impossible de charger le planning");
-      return;
-    }
-
-    // Récupérer toutes les dates uniques des réservations
-    const allDates = new Set();
-    
-    data.reservations.forEach(r => {
-      if (r.date) {
-        allDates.add(r.date);
-      }
-    });
-
-    // Si on a des dates, trouver la plus petite (le samedi)
-    if (allDates.size > 0) {
-      const dates = Array.from(allDates).map(dateStr => {
-        return { str: dateStr, obj: parseDateFromSheet(dateStr) };
-      }).filter(d => d.obj !== null);
-      
-      if (dates.length > 0) {
-        // Trier par date croissante et prendre la première = samedi
-        dates.sort((a, b) => a.obj - b.obj);
-        currentWeekStart = dates[0].obj;
-      }
-    }
-
-    // Si toujours pas de date (planning vide), calculer le samedi de cette semaine
-    if (!currentWeekStart) {
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      let diff;
-      if (dayOfWeek === 6) {
-        diff = 0;
-      } else if (dayOfWeek === 0) {
-        diff = -1;
-      } else {
-        diff = -(dayOfWeek + 1);
-      }
-      currentWeekStart = new Date(today);
-      currentWeekStart.setDate(today.getDate() + diff);
-      currentWeekStart.setHours(0, 0, 0, 0);
-    }
-
-    reservedSlots.clear();
-    
-    data.reservations.forEach(r => {
-      const key = `${r.date}_${r.heure}`;
-      reservedSlots.set(key, true);
-    });
-
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('nav-buttons').style.display = 'flex';
-    
-    renderCalendar();
-
-    if (selectedDate) {
-      renderSlots();
-    }
-
-  } catch (err) {
-    console.error("Erreur chargement:", err);
-    document.getElementById('loading').style.display = 'none';
-    showError("Erreur de connexion au serveur");
-  }
-}
+// REMPLACE la fonction confirmerReservation() par celle-ci :
 
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
@@ -650,7 +92,18 @@ async function confirmerReservation() {
   btn.disabled = true;
   btn.textContent = 'Vérification...';
 
-  // VÉRIFICATION FINALE : Le créneau est-il toujours disponible ?
+  // VÉRIFICATION 1 : Le créneau est-il encore disponible par rapport à l'heure ?
+  if (!isSlotAvailableByTime(selectedSlot, selectedDate)) {
+    showError("⚠️ Désolé, ce créneau n'est plus disponible (délai de 30 minutes dépassé). Veuillez choisir un autre créneau.");
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmer la réservation';
+    
+    // Rafraîchir l'affichage des créneaux
+    renderSlots();
+    return;
+  }
+
+  // VÉRIFICATION 2 : Le créneau est-il toujours disponible (pas réservé par quelqu'un d'autre) ?
   try {
     await loadReservations();
     
@@ -727,64 +180,3 @@ async function confirmerReservation() {
     btn.textContent = '✓ Confirmer la réservation';
   }
 }
-
-function afficherRecap(data) {
-  const dateObj = new Date(data.date);
-  const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-
-  const recapContent = document.getElementById('recap-content');
-  recapContent.innerHTML = `
-    <div class="recap-item"><strong>👤 Nom</strong>${data.nom}</div>
-    <div class="recap-item"><strong>📅 Date</strong>${dateFormatee}</div>
-    <div class="recap-item"><strong>🕐 Heure</strong>${data.heure}</div>
-    <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
-    <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
-    <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
-    <div class="recap-item"><strong>💰 Prix total</strong>${data.prix_total}€ (${data.prix_par_personne}€/pers)<br><small>Paiement sur place (CB, espèces, chèques)</small></div>
-  `;
-
-  document.getElementById('recap').style.display = 'block';
-  
-  setTimeout(() => {
-    document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
-  }, 100);
-}
-
-function showError(message) {
-  const errorDiv = document.getElementById('error-message');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
-  
-  setTimeout(() => {
-    errorDiv.style.display = 'none';
-  }, 5000);
-  
-  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function formatDate(date) {
-  const d = new Date(date);
-  return d.getFullYear() + '-' +
-         String(d.getMonth() + 1).padStart(2, '0') + '-' +
-         String(d.getDate()).padStart(2, '0');
-}
-
-function formatDateForSheet(date) {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(2);
-  return `${day}/${month}/${year}`;
-}
-
-// Initialisation
-loadReservations();
-setInterval(loadReservations, 15000);
-</script>
-</body>
-</html>
