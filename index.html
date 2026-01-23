@@ -1,4 +1,829 @@
-// Ajoute cette nouvelle fonction après la fonction formatDateForSheet()
+// ======================================== // PARTIE 1 : CRÉATION ET NAVIGATION DU PLANNING // ======================================== function creerPlanningEscapeGame() { const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet(); // Effacer tout le contenu existant sh
+
+pasted
+
+sur ce code il est prevu d'envoyer un mail de confirmation aux participant.
+est il possible de rajouter une image (plan pour acceder a l'escape game) et en texte en rouge ou il serait ecrit :
+"l'escape game ce situe au 835 rue du cheval blanc en face l'hotel sowell, le point de rendez vous est au panneau escape game marqué d'une croix (voir photos).
+
+13 janv.
+Oui, c'est tout à fait possible ! Voici la fonction modifiée qui permet d'ajouter une image et du texte formaté en HTML :
+
+Fonction email avec image et texte rouge
+Code 
+Voici les modifications apportées :
+
+Email en HTML : Le message est maintenant formaté en HTML pour permettre les couleurs et la mise en page
+Texte en rouge : Le texte d'indication est dans une boîte avec fond jaune clair et bordure rouge, avec le texte en rouge et gras
+Image intégrée : L'image est ajoutée directement dans l'email avec inlineImages
+📝 Pour utiliser cette fonction, tu dois :
+
+Télécharger ton image de plan d'accès dans Google Drive
+Récupérer l'ID de l'image :
+Fais un clic droit sur l'image dans Google Drive → "Obtenir le lien"
+L'ID est la longue chaîne dans l'URL : https://drive.google.com/file/d/ID_ICI/view
+Remplacer dans le code :
+javascript
+   const imageFile = DriveApp.getFileById('TON_ID_ICI');
+💡 Alternative si tu n'as pas l'image dans Drive :
+
+Si ton image est en ligne (sur un site web), tu peux remplacer la ligne de l'image par :
+
+html
+<img src="https://ton-site.com/plan-acces.jpg" alt="Plan d'accès" style="max-width: 600px;">
+Tu veux que je t'aide à ajuster quelque chose dans la présentation ou les couleurs ?
+
+c'est fait j'enregistre et je deploie ?
+
+13 janv.
+Oui, exactement ! Voici les étapes :
+
+Enregistrer : Ctrl+S ou Fichier → Enregistrer
+Déployer :
+Clique sur "Déployer" (en haut à droite) → "Nouveau déploiement"
+Type : "Application Web"
+Exécuter en tant que : "Moi"
+Accès : "Tous" (pour que le formulaire web puisse y accéder)
+Clique sur "Déployer"
+Récupérer l'URL : Google Apps Script va te donner une nouvelle URL de déploiement
+⚠️ IMPORTANT : Si tu as déjà un déploiement actif et un formulaire web qui l'utilise :
+
+Choisis plutôt "Gérer les déploiements"
+Clique sur l'icône ✏️ (crayon) à côté de ton déploiement existant
+Sélectionne "Nouvelle version"
+Clique sur "Déployer"
+Comme ça, l'URL reste la même et ton formulaire web continue de fonctionner !
+
+Tu as déjà un formulaire web en place ou c'est la première fois que tu déploies ?
+
+alors la tu a coder juste la partie mail mais j'ai besoin de tous le code script en entier
+
+13 janv.
+Ah oui bien sûr ! Voici le code complet avec la modification de l'email :
+
+Fonction email avec image et texte rouge
+Code ∙ Version 2 
+Fonction email avec image et texte rouge
+Code ∙ Version 3 
+Parfait ! Maintenant tu as le code complet.
+
+N'oublie pas de remplacer la ligne :
+
+javascript
+const imageFile = DriveApp.getFileById('ID_DE_TON_IMAGE');
+par l'ID réel de ton image dans Google Drive.
+
+Ensuite, tu peux enregistrer et déployer ! 👍
+
+modifie le script pour avoir les colonne en 160 les lignes en 50.
+texte centré en gras taille 15.
+couleur vert pale pour jour et date en jaune poussin les lignes 10h,14h et 19h et bleu turquoi 12h et 19h.
+les cases du samedi matin et dimanche matin en gris avec un X inscrit dans chaque case
+
+13 janv.
+Fonction email avec image et texte rouge
+Code ∙ Version 4 
+Voilà ! J'ai modifié le script avec :
+
+✅ Colonnes en 160 (au lieu de 120) ✅ Lignes en 50 (toutes les lignes du planning) ✅ Texte centré, gras, taille 15 sur tout le planning ✅ Couleurs :
+
+Vert pâle pour les jours et dates (lignes 1-2)
+Jaune poussin pour 10h, 14h et 19h
+Bleu turquoise pour 12h et 17h ✅ Samedi et dimanche matin (10h) : fond gris avec "X" dans les 6 cases (3 lignes × 2 jours)
+Tu peux maintenant enregistrer et tester avec le menu "🎮 Escape Game" → "Créer le planning" pour voir le résultat ! 🎨
+
+
+<!DOCTYPE html> <html lang="fr"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <meta name="apple-mobile-web-app-capable" content="yes"> <meta name="mobile-web-app-capable" content="yes"> <title>Réserva
+
+pasted
+
+ce code de resa bloque les creneaux deja reservé et bloqué les jours qui sont passé (bloque le jeudi car nous sommes vendredi par exemple...)
+maintenant j'aimerais que le code lors du chargement du planning au debut et lors de la reservation bloque les creneaux horaire passé et ceux futur 35min a l'avance.
+par exemple aujourdhui il est 9h55 il faut bloqué le creneaux de 10h, si nous etions 16h les creneaux de 10h,12h,14h ne serait plus disponilbe et celui de 17h ne le sera plus a partir de 16h30.
+tu comprend avant de modifier le code ?
+
+09:56
+Oui, je comprends parfaitement !
+
+Tu veux ajouter une logique temporelle qui :
+
+Bloque les créneaux déjà passés dans la journée en cours
+Bloque les créneaux futurs avec un délai de 35 minutes avant l'heure du créneau
+Exemples concrets :
+
+Il est 9h55 → Le créneau de 10h est bloqué (car il reste moins de 35 min)
+Il est 10h00 → Le créneau de 10h est bloqué (dépassé)
+Il est 16h00 → Les créneaux de 10h, 12h, 14h sont bloqués (passés)
+Il est 16h30 → Le créneau de 17h se bloque (car 17h00 - 16h30 = 30 min < 35 min)
+Il est 18h30 → Le créneau de 19h se bloque
+Question importante avant de coder :
+
+Pour les jours futurs (demain, après-demain...), tous les créneaux restent disponibles, c'est bien ça ? La règle des 35 minutes ne s'applique que pour aujourd'hui ?
+
+Par exemple :
+
+Aujourd'hui à 18h → Je peux encore réserver demain à 10h ✅
+Aujourd'hui à 18h → Je ne peux plus réserver aujourd'hui à 19h ❌ (car il est déjà 18h30 passé)
+C'est bien ça que tu veux ?
+
+"Aujourd'hui à 18h → Je ne peux plus réserver aujourd'hui à 19h ❌ (car il est déjà 18h30 passé)"
+cette phrase est illogique
+
+09:57
+Tu as raison, je me suis mal exprimé !
+
+Je reformule :
+
+Aujourd'hui à 18h00 →
+
+Je ne peux PAS réserver aujourd'hui à 19h ❌
+Pourquoi ? Car il faut 35 minutes d'avance, donc le créneau de 19h se bloque à 18h25 (19h00 - 35 min = 18h25)
+Aujourd'hui à 18h20 →
+
+Je ne peux PAS réserver aujourd'hui à 19h ❌
+Il reste seulement 40 minutes, mais le délai de sécurité de 35 min est passé depuis 18h25
+Aujourd'hui à 18h10 →
+
+Je PEUX encore réserver aujourd'hui à 19h ✅
+Il reste 50 minutes, c'est bon !
+C'est bien ça la logique que tu veux ? Le créneau se bloque 35 minutes avant son heure de début ?
+
+non aujourdh'ui a 18h ou 18h20 tu PEUT reserver le creneaux de 19h c'est a partir de 18h25 que tu ne peut plus reserver car cela me fait trop juste pour moi pour me preparer et aller a temps a l'escape game
+
+09:58
+Ah parfait, maintenant c'est clair !
+
+La règle est donc :
+
+Aujourd'hui à 18h24 → Je PEUX réserver le créneau de 19h ✅
+Aujourd'hui à 18h25 → Je NE PEUX PLUS réserver le créneau de 19h ❌ (trop juste pour toi)
+Donc le créneau se bloque exactement à : Heure du créneau - 35 minutes
+
+Exemples pour tous les créneaux :
+
+10h → se bloque à partir de 9h25
+12h → se bloque à partir de 11h25
+14h → se bloque à partir de 13h25
+17h → se bloque à partir de 16h25
+19h → se bloque à partir de 18h25
+Et cette règle s'applique uniquement pour aujourd'hui. Pour les jours futurs (demain, après-demain...), tous les créneaux restent disponibles tant qu'ils ne sont pas réservés.
+
+C'est bien ça ? Je modifie le code maintenant ?
+
+disons 30 min avant
+
+09:59
+Parfait ! Donc 30 minutes avant :
+
+Exemples pour tous les créneaux :
+
+10h → se bloque à partir de 9h30
+12h → se bloque à partir de 11h30
+14h → se bloque à partir de 13h30
+17h → se bloque à partir de 16h30
+19h → se bloque à partir de 18h30
+Je modifie le code maintenant ! 👍
+
+ok modifie le strict necessaire ne touche pas au reste du code qui et bien
+
+09:59
+Code modifié - Blocage créneaux 30min
+Code 
+Voilà ! J'ai ajouté uniquement :
+
+Une nouvelle fonction isSlotAvailableByTime() qui :
+Vérifie si la date sélectionnée est aujourd'hui
+Si oui, calcule si le créneau est encore réservable (30 min avant)
+Si c'est un autre jour, retourne true (pas de restriction)
+Modifié la fonction renderSlots() pour ajouter la vérification temporelle :
+Ligne ajoutée : const isAvailableByTime = isSlotAvailableByTime(slot, selectedDate);
+Condition modifiée : if (isReserved || !isAvailableByTime)
+Comment l'intégrer :
+
+Ajoute la fonction isSlotAvailableByTime() juste avant la fonction renderSlots() dans ton code HTML
+Remplace ta fonction renderSlots() actuelle par la nouvelle version
+Le reste du code reste intact ! 👍
+
+la verification ce fait dés le chargement de l'app ainsi que lorsque le client clique sur le bouton reservé ?
+
+10:00
+Excellente question !
+
+Actuellement, la vérification se fait :
+
+✅ Au chargement (quand on affiche les créneaux)
+❌ PAS au moment du clic sur "Confirmer la réservation"
+Il faut aussi vérifier au moment de la confirmation pour éviter qu'un client :
+
+Sélectionne un créneau à 18h20 (19h disponible)
+Remplisse le formulaire pendant 10 minutes
+Clique sur "Confirmer" à 18h30 (trop tard !)
+Je modifie le code pour ajouter cette vérification dans la fonction confirmerReservation() ?
+
+oui
+
+10:01
+Code modifié - Blocage créneaux 30min
+Code ∙ Version 2 
+Parfait ! J'ai ajouté la VÉRIFICATION 1 dans confirmerReservation() qui vérifie le délai de 30 minutes avant même de vérifier si quelqu'un d'autre a réservé.
+
+Maintenant la double vérification se fait :
+
+✅ Au chargement → renderSlots() affiche les créneaux disponibles
+✅ Au clic sur "Confirmer" → confirmerReservation() revérifie :
+D'abord le délai de 30 min
+Puis si le créneau n'a pas été pris par quelqu'un d'autre
+Si l'une des deux vérifications échoue, un message d'erreur s'affiche et les créneaux se rafraîchissent automatiquement ! 👍
+
+parfait
+
+10:01
+Super ! 🎉
+
+Récapitulatif de ce qu'on a fait :
+
+✅ Email avec image et texte rouge pour le plan d'accès ✅ Planning avec design personnalisé (colonnes 160px, lignes 50px, texte centré gras taille 15, couleurs par créneau) ✅ Samedi/Dimanche matin bloqués avec des X ✅ Blocage des créneaux à 30 minutes avant l'heure (au chargement ET à la confirmation)
+
+N'oublie pas :
+
+Dans le script Google Apps Script, remplace 'ID_DE_TON_IMAGE' par l'ID réel de ton image Drive
+Enregistre et déploie le script
+Intègre les modifications JavaScript dans ton fichier HTML de réservation
+Tout est prêt ! 🚀
+
+
+// Ajoute cette nouvelle fonction après la fonction formatDateForSheet() function isSlotAvailableByTime(slot, selectedDate) { const now = new Date(); const today = new Date(); today.setHours(0, 0, 0, 0); const compareDate = new Date(selectedDate); compareDate.setHours(0, 0, 0, 0); // Si ce n'est pas
+
+pasted
+
+marche pas
+
+10:03
+Ok, peux-tu me dire ce qui ne marche pas exactement ?
+
+Quel est le problème ?
+Les créneaux ne se bloquent pas du tout ?
+Un message d'erreur s'affiche ?
+La page ne charge pas ?
+As-tu une console d'erreur ?
+Sur mobile : difficile à voir
+Sur ordinateur : Clic droit → Inspecter → Console (onglet Console)
+Où as-tu mis ce code ?
+Tu l'as ajouté dans ton fichier HTML existant ?
+Tu as remplacé les bonnes fonctions ?
+Envoie-moi plus d'infos pour que je puisse t'aider ! 🔍
+
+bin je n'arrive pas sur la page de resa j'ai ce texte a la pplace de l'app
+
+10:04
+D'accord ! Le texte que tu vois, c'est le code JavaScript brut au lieu de l'application qui s'affiche.
+
+Le problème : Tu as collé le code JavaScript en dehors des balises <script> dans ton fichier HTML.
+
+La solution :
+
+Dans ton fichier HTML de réservation, tu dois :
+
+Trouver la balise <script> (vers la fin du fichier, avant </body>)
+Localiser ces 3 fonctions dans le script :
+function formatDateForSheet()
+function renderSlots()
+function confirmerReservation()
+Ajouter la nouvelle fonction isSlotAvailableByTime() juste après formatDateForSheet()
+Remplacer les deux autres fonctions par les nouvelles versions
+Le code doit être DANS les balises <script>...</script>, pas affiché comme du texte !
+
+Tu veux que je te donne le fichier HTML complet avec les modifications déjà intégrées au bon endroit ?
+
+non donne moi le code entier
+
+10:04
+Code HTML complet - Réservation Escape Game
+Artéfact interactif 
+
+
+Vous n’avez plus de messages gratuits jusqu’à 14:00.
+Mettre à niveau
+Continuer
+
+
+Claude est une IA et peut faire des erreurs. Veuillez vérifier les réponses.
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Réservation Escape Game Valfréjus</title>
+<style>
+  * { 
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #000;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    touch-action: pan-y;
+  }
+  h1 {
+    margin: 0;
+    padding: 20px 15px;
+    font-size: 1.4em;
+    text-align: center;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .container {
+    width: 100%;
+    padding: 15px;
+    padding-bottom: 100px;
+  }
+  
+  /* Navigation simplifiée */
+  .nav-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: sticky;
+    top: 80px;
+    z-index: 90;
+    background: #000;
+    padding: 10px 0;
+  }
+  .nav-btn {
+    flex: 1;
+    background: #333;
+    color: white;
+    border: none;
+    padding: 16px 10px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    touch-action: manipulation;
+  }
+  .nav-btn:active {
+    transform: scale(0.95);
+    background: #444;
+  }
+  
+  /* Calendrier mobile optimisé */
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 25px;
+  }
+  .day {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 18px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .day:active:not(.disabled) {
+    transform: scale(0.95);
+  }
+  .day-name {
+    font-size: 0.85em;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #aaa;
+  }
+  .day-date {
+    font-size: 1.3em;
+    font-weight: 700;
+  }
+  .day.disabled {
+    background: #0a0a0a;
+    color: #444;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .day.selected {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-color: #3399ff;
+    transform: scale(1.02);
+  }
+  
+  /* Créneaux horaires */
+  .slots {
+    margin: 25px 0;
+  }
+  .slots h2 {
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  .slot {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 12px 0;
+    cursor: pointer;
+    text-align: center;
+    font-size: 1.4em;
+    font-weight: 700;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    position: relative;
+  }
+  .slot:active:not(.disabled) {
+    transform: scale(0.98);
+  }
+  .slot.disabled {
+    background: #0a0a0a;
+    color: #555;
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  .slot.disabled::after {
+    content: ' RÉSERVÉ';
+    color: #ff4444;
+    font-size: 0.7em;
+    display: block;
+    margin-top: 5px;
+  }
+  .slot.selected {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-color: #3399ff;
+    transform: scale(1.02);
+  }
+  
+  /* Formulaire mobile */
+  .form-section {
+    margin: 25px 0;
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 15px;
+  }
+  .form-section h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    text-align: center;
+  }
+  label {
+    display: block;
+    margin: 18px 0 8px;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    background: #0a0a0a;
+    color: white;
+    border: 2px solid #333;
+    border-radius: 10px;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: #0099ff;
+  }
+  
+  /* Encadré prix */
+  .price-display {
+    margin-top: 15px;
+    padding: 18px;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-radius: 12px;
+    text-align: center;
+    display: none;
+  }
+  .price-display .price-label {
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    opacity: 0.95;
+  }
+  .price-display .price-amount {
+    font-size: 2em;
+    font-weight: 700;
+  }
+  .price-display .price-detail {
+    font-size: 0.95em;
+    margin-top: 5px;
+    opacity: 0.9;
+  }
+  .price-display .payment-info {
+    font-size: 0.85em;
+    margin-top: 10px;
+    opacity: 0.9;
+    font-style: italic;
+  }
+  
+  /* Bouton de confirmation */
+  button#confirm-btn {
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    color: white;
+    border: none;
+    padding: 20px;
+    font-size: 1.2em;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 25px;
+    width: 100%;
+    transition: all 0.2s;
+    touch-action: manipulation;
+  }
+  button#confirm-btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  button#confirm-btn:disabled {
+    background: #555;
+    opacity: 0.6;
+  }
+  
+  /* Récapitulatif */
+  .recap {
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #0066cc, #0099ff);
+    border-radius: 15px;
+    display: none;
+    animation: slideIn 0.4s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .recap h2 {
+    margin-top: 0;
+    font-size: 1.5em;
+    text-align: center;
+  }
+  .recap-item {
+    margin: 15px 0;
+    font-size: 1.05em;
+    padding: 15px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    word-break: break-word;
+  }
+  .recap-item strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    opacity: 0.9;
+  }
+  .recap-item small {
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
+    opacity: 0.9;
+  }
+  
+  /* Messages d'erreur */
+  .error {
+    background: #ff4444;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: none;
+    font-weight: 600;
+    text-align: center;
+  }
+  
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: #0099ff;
+    font-size: 1.1em;
+  }
+  
+  /* Cache sections initialement */
+  #slots, #booking-form, #recap {
+    display: none;
+  }
+  
+  /* Smooth scroll pour iOS */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎮 Réservation Escape Game<br>Valfréjus</h1>
+
+<div class="container">
+  <div class="loading" id="loading">Chargement du planning...</div>
+  <div class="error" id="error-message"></div>
+  
+  <div class="nav-buttons" style="display: none;" id="nav-buttons">
+    <button class="nav-btn" onclick="prevWeek()">← Semaine précédente</button>
+    <button class="nav-btn" onclick="nextWeek()">Semaine suivante →</button>
+  </div>
+
+  <div id="calendar" class="calendar"></div>
+
+  <div class="slots" id="slots">
+    <h2>⏰ Créneaux disponibles</h2>
+    <div id="slot-list"></div>
+  </div>
+
+  <div class="form-section" id="booking-form">
+    <h2>📝 Vos informations</h2>
+    
+    <label>Nom de famille</label>
+    <input type="text" id="nom" required autocomplete="family-name">
+
+    <label>Email</label>
+    <input type="email" id="email" required placeholder="votre@email.com" autocomplete="email">
+
+    <label>Nombre de participants</label>
+    <select id="participants" required onchange="updatePrice()">
+      <option value="">Choisir...</option>
+      <option value="2">2 personnes - 22€/pers (44€ total)</option>
+      <option value="3">3 personnes - 20€/pers (60€ total)</option>
+      <option value="4">4 personnes - 20€/pers (80€ total)</option>
+      <option value="5">5 personnes - 18€/pers (90€ total)</option>
+      <option value="6">6 personnes - 18€/pers (108€ total)</option>
+    </select>
+    
+    <div id="price-display" class="price-display">
+      <div class="price-label">Prix total</div>
+      <div id="total-price" class="price-amount"></div>
+      <div id="price-detail" class="price-detail"></div>
+      <div class="payment-info">Paiement sur place (CB, espèces, chèques)</div>
+    </div>
+
+    <label>Niveau de votre groupe</label>
+    <select id="niveau" required>
+      <option value="">Choisir...</option>
+      <option value="-">Première fois (-)</option>
+      <option value="+">Débutant (+)</option>
+      <option value="++">Intermédiaire (++)</option>
+      <option value="+++">Bon (+++)</option>
+    </select>
+
+    <label>Téléphone</label>
+    <input type="tel" id="telephone" required autocomplete="tel">
+
+    <button id="confirm-btn" onclick="confirmerReservation()">✓ Confirmer la réservation</button>
+  </div>
+
+  <div class="recap" id="recap">
+    <h2>✅ Réservation confirmée !</h2>
+    <div id="recap-content"></div>
+    <p style="margin-top: 20px; text-align: center; opacity: 0.95;">
+      📧 Un email de confirmation vous a été envoyé
+    </p>
+  </div>
+</div>
+
+<script>
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbyGM3iyAU1noFzu6qTHIlQOPPduJ5rMSMZ6FjKzw_PenWXocflTbqKThoMWyVyjs6WcEA/exec';
+
+let currentWeekStart = null;
+let selectedDate = null;
+let selectedSlot = null;
+let reservedSlots = new Map();
+
+const allSlots = ['10h', '12h', '14h', '17h', '19h'];
+
+const priceTable = {
+  2: { perPerson: 22, total: 44 },
+  3: { perPerson: 20, total: 60 },
+  4: { perPerson: 20, total: 80 },
+  5: { perPerson: 18, total: 90 },
+  6: { perPerson: 18, total: 108 }
+};
+
+function updatePrice() {
+  const participants = document.getElementById('participants').value;
+  const priceDisplay = document.getElementById('price-display');
+  const totalPrice = document.getElementById('total-price');
+  const priceDetail = document.getElementById('price-detail');
+  
+  if (participants && priceTable[participants]) {
+    const price = priceTable[participants];
+    priceDisplay.style.display = 'block';
+    totalPrice.textContent = price.total + '€';
+    priceDetail.textContent = `${price.perPerson}€ par personne`;
+  } else {
+    priceDisplay.style.display = 'none';
+  }
+}
+
+function parseDateFromSheet(dateStr) {
+  // Format attendu: "17/01/25" (dd/mm/yy)
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  
+  const day = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1;
+  const year = 2000 + parseInt(parts[2]);
+  
+  const date = new Date(year, month, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function prevWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+  resetSelection();
+  renderCalendar();
+}
+
+function nextWeek() {
+  currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+  resetSelection();
+  renderCalendar();
+}
+
+function resetSelection() {
+  selectedDate = null;
+  selectedSlot = null;
+  document.getElementById('slots').style.display = 'none';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
+}
+
+function renderCalendar() {
+  if (!currentWeekStart) return;
+  
+  const calendar = document.getElementById('calendar');
+  calendar.innerHTML = '';
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const saturday = new Date(currentWeekStart);
+
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(saturday);
+    day.setDate(saturday.getDate() + i);
+
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day';
+    
+    const dayName = day.toLocaleDateString('fr-FR', {weekday: 'short'}).toUpperCase();
+    const dayNum = day.getDate();
+    const month = day.toLocaleDateString('fr-FR', {month: 'short'});
+    
+    dayEl.innerHTML = `
+      <div class="day-name">${dayName}</div>
+      <div class="day-date">${dayNum} ${month}</div>
+    `;
+
+    if (day < today) {
+      dayEl.classList.add('disabled');
+    } else {
+      dayEl.onclick = () => selectDate(day, dayEl);
+    }
+
+    calendar.appendChild(dayEl);
+  }
+}
+
+function selectDate(date, element) {
+  selectedDate = date;
+  selectedSlot = null;
+  
+  document.querySelectorAll('.day').forEach(d => d.classList.remove('selected'));
+  element.classList.add('selected');
+  
+  document.getElementById('slots').style.display = 'block';
+  document.getElementById('booking-form').style.display = 'none';
+  document.getElementById('recap').style.display = 'none';
+  
+  renderSlots();
+  
+  setTimeout(() => {
+    document.getElementById('slots').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
 
 function isSlotAvailableByTime(slot, selectedDate) {
   const now = new Date();
@@ -36,9 +861,6 @@ function isSlotAvailableByTime(slot, selectedDate) {
   return now < blockTime;
 }
 
-
-// REMPLACE la fonction renderSlots() par celle-ci :
-
 function renderSlots() {
   const container = document.getElementById('slot-list');
   container.innerHTML = '';
@@ -68,8 +890,91 @@ function renderSlots() {
   });
 }
 
+function selectSlot(slot, element) {
+  selectedSlot = slot;
+  
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  element.classList.add('selected');
+  
+  document.getElementById('booking-form').style.display = 'block';
+  document.getElementById('recap').style.display = 'none';
+  
+  setTimeout(() => {
+    document.getElementById('booking-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
 
-// REMPLACE la fonction confirmerReservation() par celle-ci :
+async function loadReservations() {
+  try {
+    const response = await fetch(scriptUrl);
+    const data = await response.json();
+
+    if (data.status !== 'success' || !data.reservations) {
+      showError("Impossible de charger le planning");
+      return;
+    }
+
+    // Récupérer toutes les dates uniques des réservations
+    const allDates = new Set();
+    
+    data.reservations.forEach(r => {
+      if (r.date) {
+        allDates.add(r.date);
+      }
+    });
+
+    // Si on a des dates, trouver la plus petite (le samedi)
+    if (allDates.size > 0) {
+      const dates = Array.from(allDates).map(dateStr => {
+        return { str: dateStr, obj: parseDateFromSheet(dateStr) };
+      }).filter(d => d.obj !== null);
+      
+      if (dates.length > 0) {
+        // Trier par date croissante et prendre la première = samedi
+        dates.sort((a, b) => a.obj - b.obj);
+        currentWeekStart = dates[0].obj;
+      }
+    }
+
+    // Si toujours pas de date (planning vide), calculer le samedi de cette semaine
+    if (!currentWeekStart) {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      let diff;
+      if (dayOfWeek === 6) {
+        diff = 0;
+      } else if (dayOfWeek === 0) {
+        diff = -1;
+      } else {
+        diff = -(dayOfWeek + 1);
+      }
+      currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() + diff);
+      currentWeekStart.setHours(0, 0, 0, 0);
+    }
+
+    reservedSlots.clear();
+    
+    data.reservations.forEach(r => {
+      const key = `${r.date}_${r.heure}`;
+      reservedSlots.set(key, true);
+    });
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('nav-buttons').style.display = 'flex';
+    
+    renderCalendar();
+
+    if (selectedDate) {
+      renderSlots();
+    }
+
+  } catch (err) {
+    console.error("Erreur chargement:", err);
+    document.getElementById('loading').style.display = 'none';
+    showError("Erreur de connexion au serveur");
+  }
+}
 
 async function confirmerReservation() {
   const nom = document.getElementById('nom').value.trim();
@@ -180,3 +1085,64 @@ async function confirmerReservation() {
     btn.textContent = '✓ Confirmer la réservation';
   }
 }
+
+function afficherRecap(data) {
+  const dateObj = new Date(data.date);
+  const dateFormatee = dateObj.toLocaleDateString('fr-FR', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
+  const recapContent = document.getElementById('recap-content');
+  recapContent.innerHTML = `
+    <div class="recap-item"><strong>👤 Nom</strong>${data.nom}</div>
+    <div class="recap-item"><strong>📅 Date</strong>${dateFormatee}</div>
+    <div class="recap-item"><strong>🕐 Heure</strong>${data.heure}</div>
+    <div class="recap-item"><strong>👥 Participants</strong>${data.pers_niveau}</div>
+    <div class="recap-item"><strong>📞 Téléphone</strong>${data.telephone}</div>
+    <div class="recap-item"><strong>📧 Email</strong>${data.email}</div>
+    <div class="recap-item"><strong>💰 Prix total</strong>${data.prix_total}€ (${data.prix_par_personne}€/pers)<br><small>Paiement sur place (CB, espèces, chèques)</small></div>
+  `;
+
+  document.getElementById('recap').style.display = 'block';
+  
+  setTimeout(() => {
+    document.getElementById('recap').scrollIntoView({ behavior: 'smooth' });
+  }, 100);
+}
+
+function showError(message) {
+  const errorDiv = document.getElementById('error-message');
+  errorDiv.textContent = message;
+  errorDiv.style.display = 'block';
+  
+  setTimeout(() => {
+    errorDiv.style.display = 'none';
+  }, 5000);
+  
+  errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function formatDate(date) {
+  const d = new Date(date);
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function formatDateForSheet(date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2
+                                                    const year = String(d.getFullYear()).slice(2);
+  return `${day}/${month}/${year}`;
+}
+
+// Initialisation
+loadReservations();
+setInterval(loadReservations, 15000);
+</script>
+</body>
+</html>
