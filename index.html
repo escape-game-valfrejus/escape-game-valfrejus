@@ -515,6 +515,42 @@ function selectDate(date, element) {
   }, 100);
 }
 
+function isSlotAvailableByTime(slot, selectedDate) {
+  const now = new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const compareDate = new Date(selectedDate);
+  compareDate.setHours(0, 0, 0, 0);
+  
+  // Si ce n'est pas aujourd'hui, le créneau est disponible (pas de restriction temporelle)
+  if (compareDate.getTime() !== today.getTime()) {
+    return true;
+  }
+  
+  // C'est aujourd'hui, on vérifie l'heure avec le délai de 30 min
+  const slotTimes = {
+    '10h': 10,
+    '12h': 12,
+    '14h': 14,
+    '17h': 17,
+    '19h': 19
+  };
+  
+  const slotHour = slotTimes[slot];
+  if (!slotHour) return true;
+  
+  // Créer l'heure du créneau aujourd'hui
+  const slotTime = new Date();
+  slotTime.setHours(slotHour, 0, 0, 0);
+  
+  // Soustraire 30 minutes pour obtenir l'heure limite de réservation
+  const blockTime = new Date(slotTime.getTime() - 30 * 60 * 1000);
+  
+  // Si l'heure actuelle est >= à l'heure de blocage, le créneau n'est plus disponible
+  return now < blockTime;
+}
+
 function renderSlots() {
   const container = document.getElementById('slot-list');
   container.innerHTML = '';
@@ -532,8 +568,9 @@ function renderSlots() {
     slotEl.textContent = slot;
 
     const isReserved = reservedSlots.has(`${dateKey}_${slot}`);
+    const isAvailableByTime = isSlotAvailableByTime(slot, selectedDate);
     
-    if (isReserved) {
+    if (isReserved || !isAvailableByTime) {
       slotEl.classList.add('disabled');
     } else {
       slotEl.onclick = () => selectSlot(slot, slotEl);
@@ -650,7 +687,18 @@ async function confirmerReservation() {
   btn.disabled = true;
   btn.textContent = 'Vérification...';
 
-  // VÉRIFICATION FINALE : Le créneau est-il toujours disponible ?
+  // VÉRIFICATION 1 : Le créneau est-il encore disponible par rapport à l'heure ?
+  if (!isSlotAvailableByTime(selectedSlot, selectedDate)) {
+    showError("⚠️ Désolé, ce créneau n'est plus disponible (délai de 30 minutes dépassé). Veuillez choisir un autre créneau.");
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmer la réservation';
+    
+    // Rafraîchir l'affichage des créneaux
+    renderSlots();
+    return;
+  }
+
+  // VÉRIFICATION 2 : Le créneau est-il toujours disponible (pas réservé par quelqu'un d'autre) ?
   try {
     await loadReservations();
     
